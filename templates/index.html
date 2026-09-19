@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>الباحث في القرآن الكريم - أسرار السياق</title>
+    <script src="{{ url_for('static', filename='chart.js') }}"></script>
+    <style>
+        /* تعريف خط أميري العادي والعريض */
+        @font-face {
+            font-family: 'Amiri';
+            src: url("{{ url_for('static', filename='amiri-regular.ttf') }}") format('truetype');
+            font-weight: normal;
+        }
+        @font-face {
+            font-family: 'Amiri';
+            src: url("{{ url_for('static', filename='amiri-bold.ttf') }}") format('truetype');
+            font-weight: bold;
+        }
+
+        /* تعريف خط تجوال العادي والعريض */
+        @font-face {
+            font-family: 'Tajawal';
+            src: url("{{ url_for('static', filename='tajawal-regular.ttf') }}") format('truetype');
+            font-weight: normal;
+        }
+        @font-face {
+            font-family: 'Tajawal';
+            src: url("{{ url_for('static', filename='tajawal-bold.ttf') }}") format('truetype');
+            font-weight: bold;
+        }
+    </style>
+    <style>
+        :root { 
+            --primary: #1b5e20; --primary-hover: #144d18; --accent: #c59b27;
+            --bg: #f4f7f6; --card: #ffffff; --text: #333; --border: #eee;
+            --stats-bg: #e8f5e9; --highlight-bg: #fff59d; --highlight-text: #b71c1c;
+        }
+        body.dark-mode {
+            --primary: #4caf50; --primary-hover: #388e3c; --accent: #ffd54f;
+            --bg: #121212; --card: #1e1e1e; --text: #e0e0e0; --border: #333;
+            --stats-bg: #2e3b32; --highlight-bg: #fbc02d; --highlight-text: #000;
+        }
+
+        body { font-family: 'Tajawal', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); transition: background 0.3s, color 0.3s; }
+        .container { max-width: 1100px; margin: 0 auto; background: var(--card); padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); position: relative; }
+        
+        .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-top: 40px;}
+        .header h1 { font-family: 'Amiri', serif; color: var(--primary); font-size: 38px; margin: 0 0 10px 0; }
+        
+        /* الأزرار العلوية */
+        .top-buttons-left { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; }
+        .top-buttons-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
+        
+        .btn-close-app { background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-top { background: none; border: 2px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .btn-top:hover { background: var(--primary); color: white; }
+        
+        .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+        .search-bar input { flex: 1; padding: 15px; font-size: 18px; font-family: 'Amiri', serif; border: 2px solid var(--border); border-radius: 8px; outline: none; background: var(--bg); color: var(--text); }
+        .search-bar button { background: var(--primary); color: white; border: none; padding: 0 35px; font-size: 18px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.3s; }
+        .search-bar button:hover { background: var(--primary-hover); }
+
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        .panel { background: var(--bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+        .panel-title { color: var(--primary); font-weight: bold; margin-bottom: 10px; border-bottom: 1px dashed var(--border); padding-bottom: 5px; }
+        .control-row { display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px; align-items: center;}
+        .control-row label { cursor: pointer; display: flex; align-items: center; gap: 4px; font-size: 15px; }
+        .control-row select { padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border); background: var(--card); color: var(--text); font-family: 'Tajawal'; }
+
+        .stats-bar { display: flex; justify-content: space-between; align-items: center; background: var(--stats-bg); padding: 15px 20px; border-radius: 8px; border-right: 4px solid var(--primary); margin-bottom: 20px; }
+        .actions-group { display: flex; gap: 10px; }
+        .btn-icon { color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-family: 'Tajawal'; font-weight: bold; transition: 0.3s;}
+        .btn-word { background: #0d47a1; } .btn-copy { background: #e67e22; }
+        .btn-icon:disabled { background: #555; cursor: not-allowed; }
+
+        .results-box { max-height: 450px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 30px; background: var(--card); }
+        .aya-card { padding: 15px 0; border-bottom: 1px dashed var(--border); font-family: 'Amiri', serif; font-size: 24px; line-height: 2.2; }
+        .aya-card:last-child { border-bottom: none; }
+        .highlight { background-color: var(--highlight-bg); color: var(--highlight-text); font-weight: bold; padding: 0 2px; border-radius: 4px; }
+        .aya-ref { color: var(--accent); font-weight: bold; font-size: 16px; font-family: 'Tajawal', sans-serif; margin-right: 10px; }
+        .btn-load-more { display: none; width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold; }
+
+        /* تنسيقات التحليل والسياق */
+        .analytics-container { background: var(--bg); padding: 20px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 30px;}
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed var(--border); padding-bottom: 10px; }
+        .chart-header h3 { color: var(--primary); margin: 0; }
+        .chart-tools { display: flex; gap: 15px; font-size: 14px; background: var(--card); padding: 5px 15px; border-radius: 6px; border: 1px solid var(--border); align-items: center;}
+        .chart-col { display: flex; flex-direction: column; gap: 8px; }
+        .btn-tool { background: var(--primary); color: white; border: none; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-family: 'Tajawal'; font-size: 12px; }
+        
+        .stats-table { width: 100%; border-collapse: collapse; margin-top: 25px; background: var(--card); font-size: 15px;}
+        .stats-table th, .stats-table td { border: 1px solid var(--border); padding: 8px; text-align: center; }
+        .stats-table th { background-color: var(--primary); color: white; }
+        
+        .progress-bar-bg { width: 100%; background-color: #ddd; height: 10px; border-radius: 5px; overflow: hidden; margin-top: 5px; }
+        .progress-bar-fill { height: 100%; background-color: var(--accent); }
+        body.dark-mode .progress-bar-bg { background-color: #444; }
+
+        /* تنسيقات سحابة الكلمات */
+        .collocations-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
+        .collocation-col { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
+        .word-cloud { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; min-height: 120px; padding: 20px; margin-bottom: 15px; background: var(--bg); border-radius: 8px; }
+        .cloud-word { font-family: 'Amiri', serif; font-weight: bold; transition: transform 0.3s; }
+        .cloud-word:hover { transform: scale(1.2); }
+
+        /* نافذة "عن البرنامج" */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: var(--card); padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; text-align: center; border: 2px solid var(--primary); position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        .modal-close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 24px; font-weight: bold; color: #d32f2f; transition: 0.3s; }
+        .modal-close:hover { color: #b71c1c; transform: scale(1.1); }
+        .modal-title { color: var(--primary); font-family: 'Amiri', serif; font-size: 32px; margin-bottom: 15px; }
+        .modal-text { font-size: 16px; line-height: 1.8; color: var(--text); }
+        .modal-divider { width: 50%; height: 2px; background: var(--accent); margin: 20px auto; }
+        
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; justify-content: center; align-items: center; z-index: 3000; font-size: 24px; }
+    </style>
+</head>
+<body>
+
+<div id="overlay">تم إغلاق البرنامج بنجاح. يمكنك إغلاق هذه النافذة.</div>
+
+<!-- نافذة عن البرنامج -->
+<div id="aboutModal" class="modal-overlay" onclick="closeAbout(event)">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closeAbout()">&times;</span>
+        <div class="modal-title">الباحث في القرآن الكريم</div>
+        <div class="modal-text">
+            <strong>الإصدار:</strong> 1.0 (2026)<br><br>
+            هذا البرنامج <strong>مجاني بالكامل (وقف لله تعالى)</strong> لخدمة كتاب الله والباحثين في علومه، ومتاح المصدر بموجب رخصة الإبداع المشاع (CC BY-NC 4.0).<br>
+            <div class="modal-divider"></div>
+            💡 <strong>صاحب الفكرة:</strong><br>
+            <span style="font-size: 20px; font-weight: bold; color: var(--primary);">د. شعيب يحيى</span><br>
+            (جامعة سعيدة)
+        </div>
+    </div>
+</div>
+
+<div class="container">
+    <div class="top-buttons-left">
+        {% if is_local %}
+        <button class="btn-close-app" onclick="shutdownApp()">إيقاف ⏻</button>
+        {% endif %}
+    </div>
+    <div class="top-buttons-right">
+        <button class="btn-top" onclick="openAbout()">عن البرنامج ℹ️</button>
+        <button class="btn-top" onclick="toggleDarkMode()">الوضع الليلي 🌙</button>
+    </div>
+    
+    <div class="header"><h1>الباحث في القرآن الكريم</h1></div>
+
+    <div class="search-bar">
+        <input type="text" id="queryInput" placeholder="ابحث هنا (يمكنك كتابة جملة أو أكثر من كلمة)..." onkeypress="if(event.key === 'Enter') doSearch()">
+        <button onclick="doSearch()">بحث</button>
+    </div>
+
+    <!-- الفلاتر والتحكم -->
+    <div class="controls">
+        <div class="panel">
+            <div class="panel-title">إعدادات وتصفية البحث</div>
+            <div class="control-row">
+                <label><input type="radio" name="search_target" value="clean" checked> خط عادي</label>
+                <label><input type="radio" name="search_target" value="tashkeel"> مشكول</label>
+                <label><input type="radio" name="search_target" value="uthmani"> عثماني</label>
+            </div>
+            <div class="control-row" style="background: var(--card); padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
+                <label><input type="radio" name="match_type" value="exact" checked> تطابق تام</label>
+                <label><input type="radio" name="match_type" value="contains"> جزئي</label>
+                <span style="border-right: 1px solid #ccc; padding-right: 10px; margin-right: 5px;">
+                    <label style="display:inline-flex"><input type="radio" name="multi_word_logic" value="and" checked> كل الكلمات (و)</label>
+                    <label style="display:inline-flex"><input type="radio" name="multi_word_logic" value="or"> أي كلمة (أو)</label>
+                    <label style="display:inline-flex"><input type="radio" name="multi_word_logic" value="phrase"> جملة</label>
+                </span>
+            </div>
+            <div class="control-row">
+                <select id="suraFilter">
+                    <option value="all">كل السور</option>
+                    {% for sura in suras %}
+                        <option value="{{ sura.id }}">{{ sura.id }}- {{ sura.name }}</option>
+                    {% endfor %}
+                </select>
+                <select id="typeFilter">
+                    <option value="all">كل القرآن</option>
+                    <option value="meccan">مكي فقط</option>
+                    <option value="medinan">مدني فقط</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-title">خيارات العرض والسياق</div>
+            <div class="control-row">
+                <label><input type="radio" name="display_type" value="clean" onchange="resetAndRender()" checked> خط عادي</label>
+                <label><input type="radio" name="display_type" value="tashkeel" onchange="resetAndRender()"> بالتشكيل</label>
+                <label><input type="radio" name="display_type" value="uthmani" onchange="resetAndRender()"> رسم عثماني</label>
+            </div>
+            <div class="control-row" style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 10px;">
+                <label style="font-weight: bold; color: var(--primary);">مسافة البحث المصاحب (السياق): </label>
+                <input type="range" id="contextWindow" min="1" max="5" value="1" onchange="document.getElementById('windowVal').innerText = this.value; doSearch();" style="width: 100px;">
+                <span id="windowVal" style="font-weight:bold; color:var(--accent); font-size:18px;">1</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- الإحصائيات -->
+    <div class="stats-bar">
+        <div id="countDisplay" style="font-size: 18px; font-weight: bold;">النتائج ستظهر هنا</div>
+        <div class="actions-group">
+            <button id="btnCopy" class="btn-icon btn-copy" onclick="copyResults()" disabled>نسخ النتائج 📋</button>
+            <button id="btnWord" class="btn-icon btn-word" onclick="downloadWord()" disabled>تحميل في Word 💾</button>
+        </div>
+    </div>
+
+    <!-- النتائج -->
+    <div class="results-box">
+        <div id="resultsContent"><div style="text-align: center; color: #777; padding: 20px;">نتائج البحث ستظهر هنا...</div></div>
+        <button id="btnLoadMore" class="btn-load-more" onclick="loadMore()">عرض المزيد ⬇️</button>
+    </div>
+
+    <!-- قسم أسرار السياق (الكلمات المصاحبة) -->
+    <div class="analytics-container" id="collocationSection" style="display: none;">
+        <div class="chart-header">
+            <h3>أسرار السياق القرآني (الكلمات المصاحبة)</h3>
+            <div style="font-size: 13px; color: #777;">*تم استبعاد أحرف الجر والعطف والضمائر</div>
+        </div>
+        <div class="collocations-grid">
+            <!-- الكلمات قبلها -->
+            <div class="collocation-col">
+                <h4 style="text-align:center; color: var(--primary);">أكثر 10 كلمات وروداً (قبلها)</h4>
+                <div id="cloudBefore" class="word-cloud"></div>
+                <table class="stats-table">
+                    <thead><tr><th>الكلمة</th><th>التكرار</th><th style="width: 45%;">النسبة</th></tr></thead>
+                    <tbody id="tableBefore"></tbody>
+                </table>
+            </div>
+            <!-- الكلمات بعدها -->
+            <div class="collocation-col">
+                <h4 style="text-align:center; color: var(--primary);">أكثر 10 كلمات وروداً (بعدها)</h4>
+                <div id="cloudAfter" class="word-cloud"></div>
+                <table class="stats-table">
+                    <thead><tr><th>الكلمة</th><th>التكرار</th><th style="width: 45%;">النسبة</th></tr></thead>
+                    <tbody id="tableAfter"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- التحليل البياني والإحصائي لانتشار الكلمة -->
+    <div class="analytics-container">
+        <div class="chart-header">
+            <h3>التحليل البياني للإنتشار</h3>
+            <div class="chart-tools">
+                <div class="chart-col" style="border-left: 1px solid var(--border); padding-left: 15px;">
+                    <label><input type="radio" name="chart_sort" value="mushaf" onchange="updateAnalytics()" checked> حسب المصحف</label>
+                    <label><input type="radio" name="chart_sort" value="revelation" onchange="updateAnalytics()"> حسب النزول</label>
+                </div>
+                <div class="chart-col" style="border-left: 1px solid var(--border); padding-left: 15px;">
+                    <label><input type="radio" name="chart_type" value="bar" onchange="updateAnalytics()" checked> أعمدة</label>
+                    <label><input type="radio" name="chart_type" value="line" onchange="updateAnalytics()"> خطي</label>
+                </div>
+                <div class="chart-col">
+                    <button class="btn-tool" onclick="downloadChartPNG()">تصدير كصورة 🖼️</button>
+                    <button class="btn-tool" style="background:#27ae60" onclick="downloadTableCSV()">تحميل Excel 📊</button>
+                </div>
+            </div>
+        </div>
+        <canvas id="myChart" height="90" style="background: var(--card); border-radius: 8px; padding: 10px;"></canvas>
+        <table class="stats-table" id="statsTable">
+            <thead>
+                <tr>
+                    <th>القطاع / القسم</th>
+                    <th>عدد الآيات</th>
+                    <th style="width: 40%">النسبة المئوية</th>
+                </tr>
+            </thead>
+            <tbody id="statsTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    let globalResults = [];
+    let currentWords = [];
+    let chartObj = null;
+    let chartDataStore = {};
+    let currentPage = 1;
+    const ITEMS_PER_PAGE = 50;
+
+    // دوال نافذة "عن البرنامج"
+    function openAbout() { document.getElementById('aboutModal').style.display = 'flex'; }
+    function closeAbout(e) { 
+        if(e) e.stopPropagation(); 
+        document.getElementById('aboutModal').style.display = 'none'; 
+    }
+
+    function toggleDarkMode() {
+        document.body.classList.toggle('dark-mode');
+        const btns = document.querySelectorAll('.top-buttons-right .btn-top');
+        // تغيير أيقونة الوضع الليلي فقط (الزر الثاني)
+        if(document.body.classList.contains('dark-mode')) {
+            btns[1].innerHTML = "الوضع العادي ☀️"; Chart.defaults.color = '#e0e0e0';
+        } else {
+            btns[1].innerHTML = "الوضع الليلي 🌙"; Chart.defaults.color = '#333';
+        }
+        if(chartObj) updateAnalytics(); 
+    }
+
+    function highlightArabicText(text, wordsArray) {
+        if (!wordsArray || wordsArray.length === 0) return text;
+        const diacritics = '[\\u0610-\\u061A\\u064B-\\u065F\\u0670\\u06D6-\\u06ED]*';
+        let resultText = text;
+        wordsArray.forEach(word => {
+            const cleanWord = word.trim();
+            if(cleanWord) {
+                let regexStr = cleanWord.split('').join(diacritics) + diacritics;
+                const regex = new RegExp(`(${regexStr})`, 'g');
+                resultText = resultText.replace(regex, '<span class="highlight">$1</span>');
+            }
+        });
+        return resultText;
+    }
+
+    async function doSearch() {
+        const query = document.getElementById('queryInput').value.trim();
+        if (!query) return;
+
+        const multiWordLogic = document.querySelector('input[name="multi_word_logic"]:checked').value;
+        currentWords = (multiWordLogic === 'phrase') ? [query] : query.split(/\s+/);
+        
+        const payload = {
+            query: query,
+            search_target: document.querySelector('input[name="search_target"]:checked').value,
+            match_type: document.querySelector('input[name="match_type"]:checked').value,
+            multi_word_logic: multiWordLogic,
+            sura_filter: document.getElementById('suraFilter').value,
+            type_filter: document.getElementById('typeFilter').value,
+            context_window: document.getElementById('contextWindow').value
+        };
+        
+        document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; padding: 20px;">جاري البحث وتحليل السياق...</div>';
+        document.getElementById('btnLoadMore').style.display = 'none';
+
+        try {
+            const res = await fetch('/api/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json();
+            globalResults = data.results;
+
+            if(data.count > 0) {
+                document.getElementById('countDisplay').innerHTML = `تكرار الكلمات: <span style="color:var(--accent)">${data.occurrences}</span> (في <span style="color:var(--primary)">${data.count}</span> آية)`;
+            } else {
+                document.getElementById('countDisplay').innerHTML = `لا توجد نتائج مطابقة لهذه الشروط`;
+            }
+            
+            document.getElementById('btnWord').disabled = (data.count === 0);
+            document.getElementById('btnCopy').disabled = (data.count === 0);
+
+            chartDataStore = data.chart;
+            resetAndRender(); 
+            updateAnalytics(); 
+            renderCollocations(data.collocations); 
+
+        } catch (e) {
+            document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; color: red;">حدث خطأ في الاتصال.</div>';
+        }
+    }
+
+    function renderCollocations(colldata) {
+        const section = document.getElementById('collocationSection');
+        if (!colldata || (!colldata.before.length && !colldata.after.length)) {
+            section.style.display = 'none';
+            return;
+        }
+        section.style.display = 'block';
+
+        const drawCloudAndTable = (dataArr, cloudId, tableId) => {
+            const cloud = document.getElementById(cloudId);
+            const tbody = document.getElementById(tableId);
+            cloud.innerHTML = ''; tbody.innerHTML = '';
+            
+            if (dataArr.length === 0) {
+                cloud.innerHTML = '<span style="color:#999">لا توجد كلمات مصاحبة متكررة.</span>';
+                return;
+            }
+
+            const maxCount = Math.max(...dataArr.map(w => w.count));
+            const minCount = Math.min(...dataArr.map(w => w.count));
+
+            dataArr.forEach(item => {
+                let fontSize = 16;
+                if (maxCount > minCount) fontSize = 16 + ((item.count - minCount) / (maxCount - minCount)) * 26;
+                else fontSize = 24;
+
+                const span = document.createElement('span');
+                span.innerText = item.word;
+                span.className = 'cloud-word';
+                span.style.fontSize = `${fontSize}px`;
+                let lightness = 40 - ((fontSize - 16) * 0.5); 
+                span.style.color = `hsl(129, 60%, ${lightness}%)`;
+                cloud.appendChild(span);
+
+                let tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${item.word}</strong></td>
+                    <td>${item.count}</td>
+                    <td>
+                        <div style="display:flex; align-items:center; gap:10px; justify-content:center;">
+                            <span style="width:40px; font-weight:bold; font-size:13px;">${item.percent}%</span>
+                            <div class="progress-bar-bg" style="width:60%;">
+                                <div class="progress-bar-fill" style="width:${item.percent}%;"></div>
+                            </div>
+                        </div>
+                    </td>`;
+                tbody.appendChild(tr);
+            });
+        };
+
+        drawCloudAndTable(colldata.before, 'cloudBefore', 'tableBefore');
+        drawCloudAndTable(colldata.after, 'cloudAfter', 'tableAfter');
+    }
+
+    function resetAndRender() { currentPage = 1; document.getElementById('resultsContent').innerHTML = ''; renderPage(); }
+    function loadMore() { currentPage++; renderPage(); }
+
+    function renderPage() {
+        const resultsBox = document.getElementById('resultsContent');
+        const btnLoadMore = document.getElementById('btnLoadMore');
+
+        if (globalResults.length === 0) {
+            resultsBox.innerHTML = '<div style="text-align: center; color: red; padding: 20px;">لا توجد نتائج.</div>';
+            btnLoadMore.style.display = 'none'; return;
+        }
+
+        const displayType = document.querySelector('input[name="display_type"]:checked').value;
+        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+        const endIndex = startIndex + ITEMS_PER_PAGE;
+        const slice = globalResults.slice(startIndex, endIndex);
+
+        let html = '';
+        slice.forEach((item, index) => {
+            let textToDisplay = highlightArabicText(item[displayType], currentWords);
+            html += `<div class="aya-card"><strong>${startIndex + index + 1}.</strong><span> ﴿ ${textToDisplay} ﴾ </span><span class="aya-ref">[${item.sura_name}:${item.aya_num}]</span></div>`;
+        });
+        resultsBox.innerHTML += html; 
+        btnLoadMore.style.display = (endIndex < globalResults.length) ? 'block' : 'none';
+    }
+
+    function updateAnalytics() {
+        if(!chartDataStore || !chartDataStore.mushaf) return;
+        const chartType = document.querySelector('input[name="chart_type"]:checked').value;
+        const chartSort = document.querySelector('input[name="chart_sort"]:checked').value;
+        const selectedData = chartDataStore[chartSort];
+        const ctx = document.getElementById('myChart').getContext('2d');
+        const isDark = document.body.classList.contains('dark-mode');
+        
+        if (chartObj) chartObj.destroy();
+        chartObj = new Chart(ctx, {
+            type: chartType,
+            data: {
+                labels: selectedData.labels,
+                datasets: [{
+                    label: 'عدد الآيات', data: selectedData.counts,
+                    backgroundColor: chartType === 'bar' ? (isDark ? '#fbc02d' : '#c59b27') : (isDark ? 'rgba(76, 175, 80, 0.2)' : 'rgba(27, 94, 32, 0.15)'),
+                    borderColor: chartType === 'line' ? (isDark ? '#4caf50' : '#1b5e20') : undefined,
+                    borderWidth: chartType === 'line' ? 2.5 : 0, fill: chartType === 'line', tension: 0.35,
+                    pointBackgroundColor: chartType === 'line' ? (isDark ? '#fbc02d' : '#c59b27') : undefined,
+                    pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
+                }]
+            },
+            options: { responsive: true, scales: { x: { reverse: true, grid: { color: isDark ? '#333' : '#eee' } }, y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: isDark ? '#333' : '#eee' } } }, plugins: { legend: { display: false } } }
+        });
+
+        let total = selectedData.counts.reduce((a, b) => a + b, 0);
+        let tbody = document.getElementById('statsTableBody');
+        tbody.innerHTML = '';
+        selectedData.labels.forEach((label, i) => {
+            let count = selectedData.counts[i];
+            if(count > 0) { 
+                let percent = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                let tr = document.createElement('tr');
+                tr.innerHTML = `<td><strong>${label}</strong></td><td>${count}</td><td><div style="display:flex; align-items:center; gap:10px; justify-content:center;"><span style="width:40px; font-weight:bold;">${percent}%</span><div class="progress-bar-bg" style="width:60%;"><div class="progress-bar-fill" style="width:${percent}%;"></div></div></div></td>`;
+                tbody.appendChild(tr);
+            }
+        });
+    }
+
+    function downloadChartPNG() {
+        const canvas = document.getElementById('myChart');
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = canvas.width; tempCanvas.height = canvas.height;
+        const ctx = tempCanvas.getContext('2d');
+        ctx.fillStyle = document.body.classList.contains('dark-mode') ? '#1e1e1e' : '#ffffff';
+        ctx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+        ctx.drawImage(canvas, 0, 0);
+        const link = document.createElement('a'); link.download = `الرسم_البياني.png`; link.href = tempCanvas.toDataURL('image/png'); link.click();
+    }
+
+    function downloadTableCSV() {
+        if(!chartDataStore || !chartDataStore.mushaf) return;
+        const chartSort = document.querySelector('input[name="chart_sort"]:checked').value;
+        const selectedData = chartDataStore[chartSort];
+        let total = selectedData.counts.reduce((a, b) => a + b, 0);
+        let csvContent = '\uFEFF'; 
+        csvContent += "القسم,عدد الآيات,النسبة المئوية\n";
+        selectedData.labels.forEach((label, i) => {
+            let count = selectedData.counts[i];
+            if(count > 0) {
+                let percent = total > 0 ? ((count / total) * 100).toFixed(1) + "%" : "0%";
+                csvContent += `"${label}",${count},"${percent}"\n`;
+            }
+        });
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `إحصائيات_البحث.csv`; link.click();
+    }
+
+    function copyResults() {
+        if (!globalResults.length) return;
+        const displayType = document.querySelector('input[name="display_type"]:checked').value;
+        let textToCopy = `نتائج البحث عن: "${currentWords.join(' ')}"\nإجمالي الآيات: ${globalResults.length}\n\n`;
+        globalResults.forEach((item, index) => { textToCopy += `${index + 1}. ﴿ ${item[displayType]} ﴾ [${item.sura_name}:${item.aya_num}]\n`; });
+        const textarea = document.createElement("textarea"); textarea.value = textToCopy; document.body.appendChild(textarea);
+        textarea.select(); document.execCommand('copy'); document.body.removeChild(textarea);
+        const btn = document.getElementById('btnCopy'); btn.innerText = "تم النسخ ✔"; btn.style.backgroundColor = "#27ae60"; 
+        setTimeout(() => { btn.innerText = "نسخ النتائج 📋"; btn.style.backgroundColor = "#e67e22"; }, 2000);
+    }
+
+    async function downloadWord() {
+        if (!globalResults.length) return;
+        const chartSort = document.querySelector('input[name="chart_sort"]:checked').value;
+        const response = await fetch('/export/word', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: currentWords.join(' '), results: globalResults, display_type: document.querySelector('input[name="display_type"]:checked').value, stats_data: chartDataStore[chartSort] })
+        });
+        const blob = await response.blob();
+        const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `نتائج_البحث.docx`; document.body.appendChild(a); a.click(); a.remove();
+    }
+
+    async function shutdownApp() {
+        if(confirm("هل أنت متأكد أنك تريد إيقاف البرنامج؟")) {
+            document.getElementById('overlay').style.display = 'flex';
+            try { await fetch('/shutdown', { method: 'POST' }); } catch(e) {}
+            window.close(); 
+        }
+    }
+</script>
+</body>
+</html>
