@@ -470,7 +470,30 @@
                     pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
                 }]
             },
-            options: { responsive: true, scales: { x: { reverse: true, grid: { color: isDark ? '#333' : '#eee' } }, y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: isDark ? '#333' : '#eee' } } }, plugins: { legend: { display: false } } }
+            options: { 
+                responsive: true, 
+                layout: {
+                    padding: {
+                        right: 35, // إضافة مساحة في اليمين لمنع قص كلمة الفاتحة
+                        left: 20   // إضافة مساحة في اليسار للأمان
+                    }
+                },
+                scales: { 
+                    x: { 
+                        reverse: true, 
+                        grid: { color: isDark ? '#333' : '#eee' },
+                        ticks: {
+                            font: { family: 'Tajawal' } // لضمان جمال الخط
+                        }
+                    }, 
+                    y: { 
+                        beginAtZero: true, 
+                        ticks: { stepSize: 1, font: { family: 'Tajawal' } }, 
+                        grid: { color: isDark ? '#333' : '#eee' } 
+                    } 
+                }, 
+                plugins: { legend: { display: false } } 
+            }
         });
 
         let total = selectedData.counts.reduce((a, b) => a + b, 0);
