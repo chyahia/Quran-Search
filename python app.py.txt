@@ -1,4 +1,8 @@
+git add .
 
+git commit -m " Update2 "
+
+git push origin main
 .......................................................................
 pyinstaller --name "Quran_Search" --icon="icon.ico" --noconsole --add-data "templates;templates" --add-data "static;static" --add-data "quran.db;." --add-data "export.py;." app.py
 ......................................................................
