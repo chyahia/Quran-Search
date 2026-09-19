@@ -149,9 +149,13 @@
     
     <div class="header"><h1>الباحث في القرآن الكريم</h1></div>
 
-    <div class="search-bar">
-        <input type="text" id="queryInput" placeholder="ابحث هنا (يمكنك كتابة جملة أو أكثر من كلمة)..." onkeypress="if(event.key === 'Enter') doSearch()">
-        <button onclick="doSearch()">بحث</button>
+    <div class="search-bar" style="align-items: stretch;">
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 10px;">
+            <input type="text" id="queryInput" placeholder="الكلمة الأولى..." onkeypress="if(event.key === 'Enter') doSearch()" style="width: 100%; box-sizing: border-box;">
+            <input type="text" id="queryInput2" placeholder="الكلمة الثانية (للمقارنة)..." onkeypress="if(event.key === 'Enter') doSearch()" style="display: none; width: 100%; box-sizing: border-box; border-color: var(--accent);">
+        </div>
+        <button id="btnCompare" onclick="toggleCompare()" style="background: var(--accent); color: white; border: none; border-radius: 8px; padding: 0 15px; cursor: pointer; font-weight: bold; font-family: 'Tajawal'; transition: 0.3s;">+ مقارنة</button>
+        <button onclick="doSearch()" style="padding: 0 35px;">بحث</button>
     </div>
 
     <!-- الفلاتر والتحكم -->
@@ -166,6 +170,7 @@
             <div class="control-row" style="background: var(--card); padding: 8px; border-radius: 6px; border: 1px solid var(--border);">
                 <label><input type="radio" name="match_type" value="exact" checked> تطابق تام</label>
                 <label><input type="radio" name="match_type" value="contains"> جزئي</label>
+                <label><input type="radio" name="match_type" value="root"> 💡 بالجذر</label>
                 <span style="border-right: 1px solid #ccc; padding-right: 10px; margin-right: 5px;">
                     <label style="display:inline-flex"><input type="radio" name="multi_word_logic" value="and" checked> كل الكلمات (و)</label>
                     <label style="display:inline-flex"><input type="radio" name="multi_word_logic" value="or"> أي كلمة (أو)</label>
@@ -283,8 +288,24 @@
     let currentWords = [];
     let chartObj = null;
     let chartDataStore = {};
+    let chartDataStore2 = null;
+    let query1Name = '';
+    let query2Name = '';
+    let isCompareMode = false;
     let currentPage = 1;
     const ITEMS_PER_PAGE = 50;
+    let globalRootHighlights = {};
+
+    // دالة إظهار وإخفاء حقل المقارنة
+    function toggleCompare() {
+        isCompareMode = !isCompareMode;
+        const q2 = document.getElementById('queryInput2');
+        q2.style.display = isCompareMode ? 'block' : 'none';
+        if(!isCompareMode) q2.value = '';
+        const btn = document.getElementById('btnCompare');
+        btn.innerText = isCompareMode ? '- إلغاء المقارنة' : '+ مقارنة';
+        btn.style.background = isCompareMode ? '#d32f2f' : 'var(--accent)';
+    }
 
     // دوال نافذة "عن البرنامج"
     function openAbout() { document.getElementById('aboutModal').style.display = 'flex'; }
@@ -305,16 +326,28 @@
         if(chartObj) updateAnalytics(); 
     }
 
-    function highlightArabicText(text, wordsArray) {
+    function highlightArabicText(text, wordsArray, matchType) {
         if (!wordsArray || wordsArray.length === 0) return text;
         const diacritics = '[\\u0610-\\u061A\\u064B-\\u065F\\u0670\\u06D6-\\u06ED]*';
         let resultText = text;
+        
         wordsArray.forEach(word => {
             const cleanWord = word.trim();
-            if(cleanWord) {
+            if (cleanWord) {
+                // بناء التعبير النمطي الأساسي لمطابقة الحروف والتشكيل
                 let regexStr = cleanWord.split('').join(diacritics) + diacritics;
-                const regex = new RegExp(`(${regexStr})`, 'g');
-                resultText = resultText.replace(regex, '<span class="highlight">$1</span>');
+                
+                if (matchType === 'exact') {
+                    // سر التطابق التام: نلزم الكلمة بأن تكون بين مسافتين (أو أول/آخر النص)
+                    regexStr = `(^|\\s)(${regexStr})(?=\\s|$)`;
+                    const regex = new RegExp(regexStr, 'g');
+                    resultText = resultText.replace(regex, '$1<span class="highlight">$2</span>');
+                } else {
+                    // التلوين الجزئي (يعمل كما كان بنجاح)
+                    regexStr = `(${regexStr})`;
+                    const regex = new RegExp(regexStr, 'g');
+                    resultText = resultText.replace(regex, '<span class="highlight">$1</span>');
+                }
             }
         });
         return resultText;
@@ -322,46 +355,76 @@
 
     async function doSearch() {
         const query = document.getElementById('queryInput').value.trim();
+        const query2 = document.getElementById('queryInput2').value.trim();
         if (!query) return;
 
         const multiWordLogic = document.querySelector('input[name="multi_word_logic"]:checked').value;
         currentWords = (multiWordLogic === 'phrase') ? [query] : query.split(/\s+/);
+        if (isCompareMode && query2) {
+            currentWords = currentWords.concat(multiWordLogic === 'phrase' ? [query2] : query2.split(/\s+/));
+        }
         
-        const payload = {
-            query: query,
-            search_target: document.querySelector('input[name="search_target"]:checked').value,
+        query1Name = query; query2Name = query2;
+
+        const payload1 = {
+            query: query, search_target: document.querySelector('input[name="search_target"]:checked').value,
             match_type: document.querySelector('input[name="match_type"]:checked').value,
-            multi_word_logic: multiWordLogic,
-            sura_filter: document.getElementById('suraFilter').value,
-            type_filter: document.getElementById('typeFilter').value,
-            context_window: document.getElementById('contextWindow').value
+            multi_word_logic: multiWordLogic, sura_filter: document.getElementById('suraFilter').value,
+            type_filter: document.getElementById('typeFilter').value, context_window: document.getElementById('contextWindow').value
         };
         
         document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; padding: 20px;">جاري البحث وتحليل السياق...</div>';
         document.getElementById('btnLoadMore').style.display = 'none';
 
         try {
-            const res = await fetch('/api/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            });
-            const data = await res.json();
-            globalResults = data.results;
+            const req1 = fetch('/api/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload1) });
+            let req2 = null;
+            if (isCompareMode && query2) {
+                const payload2 = { ...payload1, query: query2 };
+                req2 = fetch('/api/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload2) });
+            }
 
-            if(data.count > 0) {
-                document.getElementById('countDisplay').innerHTML = `تكرار الكلمات: <span style="color:var(--accent)">${data.occurrences}</span> (في <span style="color:var(--primary)">${data.count}</span> آية)`;
+            // إرسال الطلبين معاً وانتظار النتيجة
+            const [res1, res2] = await Promise.all([req1, req2 ? req2 : Promise.resolve(null)]);
+            const data1 = await res1.json();
+            const data2 = res2 ? await res2.json() : null;
+
+            chartDataStore = data1.chart;
+            chartDataStore2 = data2 ? data2.chart : null;
+            globalRootHighlights = data1.root_highlights || {};
+            
+            if (data2 && data2.root_highlights) {
+                for (const key in data2.root_highlights) {
+                    globalRootHighlights[key] = globalRootHighlights[key] ? [...new Set([...globalRootHighlights[key], ...data2.root_highlights[key]])] : data2.root_highlights[key];
+                }
+            }
+
+            if (data2) {
+                // دمج نتائج الكلمتين وإزالة الآيات المكررة (إذا اجتمعت الكلمتان في نفس الآية)
+                globalResults = [...data1.results, ...data2.results];
+                const uniqueResults = []; const seen = new Set();
+                globalResults.forEach(item => {
+                    const id = `${item.sura_id}_${item.aya_num}`;
+                    if (!seen.has(id)) { seen.add(id); uniqueResults.push(item); }
+                });
+                // ترتيب الآيات حسب المصحف
+                globalResults = uniqueResults.sort((a, b) => (a.sura_id === b.sura_id) ? a.aya_num - b.aya_num : a.sura_id - b.sura_id);
+                document.getElementById('countDisplay').innerHTML = `مقارنة: <span style="color:var(--accent)">${query1Name}</span> (${data1.occurrences}) | <span style="color:#e74c3c">${query2Name}</span> (${data2.occurrences})`;
             } else {
-                document.getElementById('countDisplay').innerHTML = `لا توجد نتائج مطابقة لهذه الشروط`;
+                globalResults = data1.results;
+                if(data1.count > 0) document.getElementById('countDisplay').innerHTML = `تكرار الكلمات: <span style="color:var(--accent)">${data1.occurrences}</span> (في <span style="color:var(--primary)">${data1.count}</span> آية)`;
+                else document.getElementById('countDisplay').innerHTML = `لا توجد نتائج مطابقة لهذه الشروط`;
             }
             
-            document.getElementById('btnWord').disabled = (data.count === 0);
-            document.getElementById('btnCopy').disabled = (data.count === 0);
+            document.getElementById('btnWord').disabled = (globalResults.length === 0);
+            document.getElementById('btnCopy').disabled = (globalResults.length === 0);
 
-            chartDataStore = data.chart;
             resetAndRender(); 
             updateAnalytics(); 
-            renderCollocations(data.collocations); 
+            
+            // إخفاء الكلمات المصاحبة في وضع المقارنة لمنع التداخل
+            if (data2) document.getElementById('collocationSection').style.display = 'none';
+            else renderCollocations(data1.collocations); 
 
         } catch (e) {
             document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; color: red;">حدث خطأ في الاتصال.</div>';
@@ -435,13 +498,20 @@
         }
 
         const displayType = document.querySelector('input[name="display_type"]:checked').value;
+        const matchType = document.querySelector('input[name="match_type"]:checked').value; // معرفة نوع البحث
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
         const slice = globalResults.slice(startIndex, endIndex);
 
         let html = '';
         slice.forEach((item, index) => {
-            let textToDisplay = highlightArabicText(item[displayType], currentWords);
+            let textToDisplay = item[displayType];
+            
+            // تطبيق التلوين فقط إذا لم يكن البحث بالجذر
+            if (matchType !== 'root') {
+                textToDisplay = highlightArabicText(textToDisplay, currentWords, matchType);
+            }
+
             html += `<div class="aya-card"><strong>${startIndex + index + 1}.</strong><span> ﴿ ${textToDisplay} ﴾ </span><span class="aya-ref">[${item.sura_name}:${item.aya_num}]</span></div>`;
         });
         resultsBox.innerHTML += html; 
@@ -457,57 +527,71 @@
         const isDark = document.body.classList.contains('dark-mode');
         
         if (chartObj) chartObj.destroy();
+        
+        let datasets = [{
+            label: (isCompareMode && chartDataStore2) ? query1Name : 'عدد الآيات', 
+            data: selectedData.counts,
+            backgroundColor: chartType === 'bar' ? (isDark ? '#fbc02d' : '#c59b27') : (isDark ? 'rgba(76, 175, 80, 0.2)' : 'rgba(27, 94, 32, 0.15)'),
+            borderColor: chartType === 'line' ? (isDark ? '#4caf50' : '#1b5e20') : undefined,
+            borderWidth: chartType === 'line' ? 2.5 : 0, fill: chartType === 'line', tension: 0.35,
+            pointBackgroundColor: chartType === 'line' ? (isDark ? '#fbc02d' : '#c59b27') : undefined,
+            pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
+        }];
+
+        if (isCompareMode && chartDataStore2) {
+            const selectedData2 = chartDataStore2[chartSort];
+            datasets.push({
+                label: query2Name, 
+                data: selectedData2.counts,
+                backgroundColor: chartType === 'bar' ? (isDark ? '#e74c3c' : '#c0392b') : (isDark ? 'rgba(231, 76, 60, 0.2)' : 'rgba(192, 57, 43, 0.15)'),
+                borderColor: chartType === 'line' ? (isDark ? '#ff7979' : '#c0392b') : undefined,
+                borderWidth: chartType === 'line' ? 2.5 : 0, fill: chartType === 'line', tension: 0.35,
+                pointBackgroundColor: chartType === 'line' ? (isDark ? '#ff7979' : '#c0392b') : undefined,
+                pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
+            });
+        }
+
         chartObj = new Chart(ctx, {
             type: chartType,
-            data: {
-                labels: selectedData.labels,
-                datasets: [{
-                    label: 'عدد الآيات', data: selectedData.counts,
-                    backgroundColor: chartType === 'bar' ? (isDark ? '#fbc02d' : '#c59b27') : (isDark ? 'rgba(76, 175, 80, 0.2)' : 'rgba(27, 94, 32, 0.15)'),
-                    borderColor: chartType === 'line' ? (isDark ? '#4caf50' : '#1b5e20') : undefined,
-                    borderWidth: chartType === 'line' ? 2.5 : 0, fill: chartType === 'line', tension: 0.35,
-                    pointBackgroundColor: chartType === 'line' ? (isDark ? '#fbc02d' : '#c59b27') : undefined,
-                    pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
-                }]
-            },
+            data: { labels: selectedData.labels, datasets: datasets },
             options: { 
-                responsive: true, 
-                layout: {
-                    padding: {
-                        right: 35, // إضافة مساحة في اليمين لمنع قص كلمة الفاتحة
-                        left: 20   // إضافة مساحة في اليسار للأمان
-                    }
-                },
+                responsive: true, layout: { padding: { right: 35, left: 20 } },
                 scales: { 
-                    x: { 
-                        reverse: true, 
-                        grid: { color: isDark ? '#333' : '#eee' },
-                        ticks: {
-                            font: { family: 'Tajawal' } // لضمان جمال الخط
-                        }
-                    }, 
-                    y: { 
-                        beginAtZero: true, 
-                        ticks: { stepSize: 1, font: { family: 'Tajawal' } }, 
-                        grid: { color: isDark ? '#333' : '#eee' } 
-                    } 
+                    x: { reverse: true, grid: { color: isDark ? '#333' : '#eee' }, ticks: { font: { family: 'Tajawal' } } }, 
+                    y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Tajawal' } }, grid: { color: isDark ? '#333' : '#eee' } } 
                 }, 
-                plugins: { legend: { display: false } } 
+                plugins: { legend: { display: (isCompareMode && chartDataStore2), labels: { font: { family: 'Tajawal', size: 14 }, color: isDark ? '#e0e0e0' : '#333' } } } 
             }
         });
 
-        let total = selectedData.counts.reduce((a, b) => a + b, 0);
+        // تحديث جدول الإحصائيات ليناسب المقارنة
         let tbody = document.getElementById('statsTableBody');
         tbody.innerHTML = '';
-        selectedData.labels.forEach((label, i) => {
-            let count = selectedData.counts[i];
-            if(count > 0) { 
-                let percent = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-                let tr = document.createElement('tr');
-                tr.innerHTML = `<td><strong>${label}</strong></td><td>${count}</td><td><div style="display:flex; align-items:center; gap:10px; justify-content:center;"><span style="width:40px; font-weight:bold;">${percent}%</span><div class="progress-bar-bg" style="width:60%;"><div class="progress-bar-fill" style="width:${percent}%;"></div></div></div></td>`;
-                tbody.appendChild(tr);
-            }
-        });
+        
+        if (isCompareMode && chartDataStore2) {
+            const selectedData2 = chartDataStore2[chartSort];
+            document.querySelector('#statsTable thead tr').innerHTML = `<th>القطاع / القسم</th><th style="color: var(--accent);">${query1Name}</th><th style="color: #c0392b;">${query2Name}</th>`;
+            selectedData.labels.forEach((label, i) => {
+                let count1 = selectedData.counts[i]; let count2 = selectedData2.counts[i];
+                if(count1 > 0 || count2 > 0) { 
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `<td><strong>${label}</strong></td><td style="color: var(--accent); font-weight: bold; font-size: 18px;">${count1}</td><td style="color: #c0392b; font-weight: bold; font-size: 18px;">${count2}</td>`;
+                    tbody.appendChild(tr);
+                }
+            });
+        } else {
+            let total = selectedData.counts.reduce((a, b) => a + b, 0);
+            document.querySelector('#statsTable thead tr').innerHTML = `<th>القطاع / القسم</th><th>عدد الآيات</th><th style="width: 40%">النسبة المئوية</th>`;
+            selectedData.labels.forEach((label, i) => {
+                let count = selectedData.counts[i];
+                if(count > 0) { 
+                    let percent = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
+                    let tr = document.createElement('tr');
+                    tr.innerHTML = `<td><strong>${label}</strong></td><td>${count}</td><td><div style="display:flex; align-items:center; gap:10px; justify-content:center;"><span style="width:40px; font-weight:bold;">${percent}%</span><div class="progress-bar-bg" style="width:60%;"><div class="progress-bar-fill" style="width:${percent}%;"></div></div></div></td>`;
+                    tbody.appendChild(tr);
+                }
+            });
+        }
     }
 
     function downloadChartPNG() {

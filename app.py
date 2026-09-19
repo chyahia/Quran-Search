@@ -183,11 +183,11 @@ def search():
     context_window = int(data.get('context_window', 1))
 
     if not query:
-        return jsonify({'count': 0, 'occurrences': 0, 'results': [], 'chart': {}, 'collocations': {}})
+        return jsonify({'count': 0, 'occurrences': 0, 'results': [], 'chart': {}, 'collocations': {}, 'root_highlights': {}})
 
     words = [query] if multi_word_logic == 'phrase' else query.split()
     if not words:
-        return jsonify({'count': 0, 'occurrences': 0, 'results': [], 'chart': {}, 'collocations': {}})
+        return jsonify({'count': 0, 'occurrences': 0, 'results': [], 'chart': {}, 'collocations': {}, 'root_highlights': {}})
 
     target_col = {'clean': 'text_clean', 'tashkeel': 'text_tashkeel', 'uthmani': 'text_uthmani'}.get(search_target, 'text_clean')
 
@@ -197,8 +197,48 @@ def search():
     conditions, params = [], []
     word_conditions = []
     
+    root_highlights = {}
+    total_root_occurrences = 0
+
     for w in words:
-        if match_type == 'exact':
+        if match_type == 'root':
+            clean_root = w.replace(" ", "")
+            
+            # 1. جلب مواقع المشتقات لإنشاء خريطة التلوين
+            cur.execute("""
+                SELECT rw.sura_id, rw.aya_num, rw.word_location 
+                FROM root_words rw 
+                JOIN roots r ON rw.root_id = r.id 
+                WHERE REPLACE(r.arabic_trilateral, ' ', '') = ?
+            """, (clean_root,))
+            root_matches = cur.fetchall()
+            
+            total_root_occurrences += len(root_matches)
+            
+            for r_sura, r_aya, r_loc in root_matches:
+                key = f"{r_sura}_{r_aya}"
+                try:
+                    # تحويل مكان الكلمة (مثل 41:24:4) إلى فهرس برمجي يبدأ من 0 (تصبح 3)
+                    word_idx = int(r_loc.split(':')[2]) - 1 
+                    if key not in root_highlights:
+                        root_highlights[key] = []
+                    root_highlights[key].append(word_idx)
+                except:
+                    pass
+            
+            # 2. شرط جلب الآيات نفسها
+            word_conditions.append("""
+                EXISTS (
+                    SELECT 1 FROM root_words rw 
+                    JOIN roots r ON rw.root_id = r.id 
+                    WHERE REPLACE(r.arabic_trilateral, ' ', '') = ? 
+                    AND rw.sura_id = a.sura_id 
+                    AND rw.aya_num = a.aya_num
+                )
+            """)
+            params.append(clean_root)
+            
+        elif match_type == 'exact':
             pattern = rf'(?<![\u0621-\u064A\u0671-\u06D3]){re.escape(w)}(?![\u0621-\u064A\u0671-\u06D3])'
             word_conditions.append(f"a.{target_col} REGEXP ?")
             params.append(pattern)
@@ -229,21 +269,23 @@ def search():
     cur.execute(sql, tuple(params))
     rows = cur.fetchall()
     
-    total_occurrences = 0
-    for row in rows:
-        if multi_word_logic == 'phrase':
-            if match_type == 'exact':
-                pattern = rf'(?<![\u0621-\u064A\u0671-\u06D3]){re.escape(query)}(?![\u0621-\u064A\u0671-\u06D3])'
-                total_occurrences += len(re.findall(pattern, row[target_col]))
-            else:
-                total_occurrences += row[target_col].count(query)
-        else:
-            for w in words:
+    total_occurrences = total_root_occurrences if match_type == 'root' else 0
+    
+    if match_type != 'root':
+        for row in rows:
+            if multi_word_logic == 'phrase':
                 if match_type == 'exact':
-                    pattern = rf'(?<![\u0621-\u064A\u0671-\u06D3]){re.escape(w)}(?![\u0621-\u064A\u0671-\u06D3])'
+                    pattern = rf'(?<![\u0621-\u064A\u0671-\u06D3]){re.escape(query)}(?![\u0621-\u064A\u0671-\u06D3])'
                     total_occurrences += len(re.findall(pattern, row[target_col]))
                 else:
-                    total_occurrences += row[target_col].count(w)
+                    total_occurrences += row[target_col].count(query)
+            else:
+                for w in words:
+                    if match_type == 'exact':
+                        pattern = rf'(?<![\u0621-\u064A\u0671-\u06D3]){re.escape(w)}(?![\u0621-\u064A\u0671-\u06D3])'
+                        total_occurrences += len(re.findall(pattern, row[target_col]))
+                    else:
+                        total_occurrences += row[target_col].count(w)
 
     results = [{
         'sura_id': r['sura_id'], 'sura_name': r['sura_name'], 'aya_num': r['aya_num'],
@@ -260,7 +302,8 @@ def search():
         'occurrences': total_occurrences, 
         'results': results, 
         'chart': chart_data,
-        'collocations': collocations_data
+        'collocations': collocations_data,
+        'root_highlights': root_highlights
     })
 
 @app.route('/export/word', methods=['POST'])
