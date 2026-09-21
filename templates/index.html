@@ -3,34 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>الباحث في القرآن الكريم - أسرار السياق</title>
+    <title>الباحث في القرآن الكريم</title>
     <script src="{{ url_for('static', filename='chart.js') }}"></script>
     <style>
-        /* تعريف خط أميري العادي والعريض */
-        @font-face {
-            font-family: 'Amiri';
-            src: url("{{ url_for('static', filename='amiri-regular.ttf') }}") format('truetype');
-            font-weight: normal;
-        }
-        @font-face {
-            font-family: 'Amiri';
-            src: url("{{ url_for('static', filename='amiri-bold.ttf') }}") format('truetype');
-            font-weight: bold;
-        }
-
-        /* تعريف خط تجوال العادي والعريض */
-        @font-face {
-            font-family: 'Tajawal';
-            src: url("{{ url_for('static', filename='tajawal-regular.ttf') }}") format('truetype');
-            font-weight: normal;
-        }
-        @font-face {
-            font-family: 'Tajawal';
-            src: url("{{ url_for('static', filename='tajawal-bold.ttf') }}") format('truetype');
-            font-weight: bold;
-        }
-    </style>
-    <style>
+        @font-face { font-family: 'Amiri'; src: url("{{ url_for('static', filename='amiri-regular.ttf') }}") format('truetype'); font-weight: normal; }
+        @font-face { font-family: 'Amiri'; src: url("{{ url_for('static', filename='amiri-bold.ttf') }}") format('truetype'); font-weight: bold; }
+        @font-face { font-family: 'Tajawal'; src: url("{{ url_for('static', filename='tajawal-regular.ttf') }}") format('truetype'); font-weight: normal; }
+        @font-face { font-family: 'Tajawal'; src: url("{{ url_for('static', filename='tajawal-bold.ttf') }}") format('truetype'); font-weight: bold; }
+        
         :root { 
             --primary: #1b5e20; --primary-hover: #144d18; --accent: #c59b27;
             --bg: #f4f7f6; --card: #ffffff; --text: #333; --border: #eee;
@@ -48,10 +28,8 @@
         .header { text-align: center; margin-bottom: 25px; border-bottom: 2px solid var(--border); padding-bottom: 15px; margin-top: 40px;}
         .header h1 { font-family: 'Amiri', serif; color: var(--primary); font-size: 38px; margin: 0 0 10px 0; }
         
-        /* الأزرار العلوية */
         .top-buttons-left { position: absolute; top: 20px; left: 20px; display: flex; gap: 10px; }
         .top-buttons-right { position: absolute; top: 20px; right: 20px; display: flex; gap: 10px; }
-        
         .btn-close-app { background: #d32f2f; color: white; border: none; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-weight: bold; }
         .btn-top { background: none; border: 2px solid var(--primary); color: var(--primary); padding: 6px 12px; border-radius: 20px; cursor: pointer; font-weight: bold; transition: 0.3s; }
         .btn-top:hover { background: var(--primary); color: white; }
@@ -77,11 +55,51 @@
         .results-box { max-height: 450px; overflow-y: auto; border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-bottom: 30px; background: var(--card); }
         .aya-card { padding: 15px 0; border-bottom: 1px dashed var(--border); font-family: 'Amiri', serif; font-size: 24px; line-height: 2.2; }
         .aya-card:last-child { border-bottom: none; }
-        .highlight { background-color: var(--highlight-bg); color: var(--highlight-text); font-weight: bold; padding: 0 2px; border-radius: 4px; }
+        /* ألوان التمييز المتعددة للكلمات */
+        .highlight-0 { background-color: #fff176; color: #b71c1c; font-weight: bold; padding: 0 4px; border-radius: 4px; border-bottom: 2px solid #fbc02d; }
+        .highlight-1 { background-color: #ffcdd2; color: #b71c1c; font-weight: bold; padding: 0 4px; border-radius: 4px; border-bottom: 2px solid #e53935; }
+        .highlight-2 { background-color: #bbdefb; color: #0d47a1; font-weight: bold; padding: 0 4px; border-radius: 4px; border-bottom: 2px solid #1e88e5; }
+        .highlight-3 { background-color: #c8e6c9; color: #1b5e20; font-weight: bold; padding: 0 4px; border-radius: 4px; border-bottom: 2px solid #43a047; }
+        .highlight-4 { background-color: #e1bee7; color: #4a148c; font-weight: bold; padding: 0 4px; border-radius: 4px; border-bottom: 2px solid #8e24aa; }
+
+        /* ألوان التمييز في الوضع الليلي */
+        body.dark-mode .highlight-0 { background-color: #fbc02d; color: #000; border-bottom-color: #f57f17; }
+        body.dark-mode .highlight-1 { background-color: #e57373; color: #000; border-bottom-color: #c62828; }
+        body.dark-mode .highlight-2 { background-color: #64b5f6; color: #000; border-bottom-color: #1565c0; }
+        body.dark-mode .highlight-3 { background-color: #81c784; color: #000; border-bottom-color: #2e7d32; }
+        body.dark-mode .highlight-4 { background-color: #ba68c8; color: #000; border-bottom-color: #6a1b9a; }
+
         .aya-ref { color: var(--accent); font-weight: bold; font-size: 16px; font-family: 'Tajawal', sans-serif; margin-right: 10px; }
         .btn-load-more { display: none; width: 100%; background: var(--primary); color: white; padding: 12px; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 15px; font-weight: bold; }
 
-        /* تنسيقات التحليل والسياق */
+        .aya-card.excluded { opacity: 0.35; background: var(--stats-bg); padding: 15px; border-radius: 8px; margin-bottom: 10px; }
+        .btn-exclude { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-family: 'Tajawal'; font-weight: bold; margin-right: 15px; font-size: 13px; transition: 0.3s; }
+        .aya-card.excluded .btn-exclude { background: #27ae60; text-decoration: none; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        .pulse-btn { animation: pulse 1.5s infinite; background: #9b59b6 !important; border: 2px solid #fff; }
+
+        /* تنسيقات مربع الملاحظات البحثية */
+        .aya-note { width: 100%; box-sizing: border-box; margin-top: 12px; padding: 10px; border: 1px dashed var(--border); border-radius: 6px; font-family: 'Tajawal'; font-size: 15px; background: var(--bg); color: var(--text); resize: vertical; min-height: 60px; outline: none; transition: 0.3s; }
+        .aya-note:focus { border-color: var(--accent); background: var(--card); border-style: solid; box-shadow: 0 0 5px rgba(197, 155, 39, 0.3); }
+
+        /* تنسيقات القائمة المنسدلة للمحفظة */
+        .dropdown-menu { display: none; position: absolute; top: 110%; right: 0; background: var(--card); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); z-index: 1000; min-width: 170px; overflow: hidden; }
+        .dropdown-menu.show { display: block; }
+        .dropdown-menu button { display: block; width: 100%; text-align: right; padding: 12px 15px; background: none; border: none; border-bottom: 1px dashed var(--border); font-family: 'Tajawal'; font-size: 15px; color: var(--text); cursor: pointer; transition: 0.2s; }
+        .dropdown-menu button:last-child { border-bottom: none; }
+        .dropdown-menu button:hover { background: var(--bg); color: var(--primary); font-weight: bold; padding-right: 20px; }
+        
+        .grammar-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 15px; max-width: 800px; margin-left: auto; margin-right: auto;}
+        .grammar-col { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+        .grammar-total-btn { width: 100%; background: var(--primary); color: white; border: none; padding: 12px; border-radius: 6px; font-family: 'Tajawal'; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.3s; text-align: right; display: flex; justify-content: space-between; }
+        .grammar-item-btn { width: 100%; background: var(--card); color: var(--text); border: 1px solid var(--border); padding: 10px; border-radius: 6px; font-family: 'Tajawal'; font-size: 14px; cursor: pointer; transition: 0.2s; text-align: right; display: flex; flex-direction: column; gap: 5px; }
+        .grammar-item-btn:hover { border-color: var(--accent); background: var(--highlight-bg); color: #000; transform: scale(1.02); }
+        .grammar-item-header { display: flex; justify-content: space-between; font-weight: bold; }
+        .grammar-item-bar-bg { width: 100%; background: #ddd; height: 6px; border-radius: 3px; overflow: hidden; }
+        .grammar-item-bar-fill { height: 100%; background: var(--accent); }
+        body.dark-mode .grammar-item-btn { background: #1e1e1e; border-color: #444; }
+        body.dark-mode .grammar-item-bar-bg { background: #444; }
+
         .analytics-container { background: var(--bg); padding: 20px; border: 1px solid var(--border); border-radius: 8px; margin-bottom: 30px;}
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px dashed var(--border); padding-bottom: 10px; }
         .chart-header h3 { color: var(--primary); margin: 0; }
@@ -97,14 +115,12 @@
         .progress-bar-fill { height: 100%; background-color: var(--accent); }
         body.dark-mode .progress-bar-bg { background-color: #444; }
 
-        /* تنسيقات سحابة الكلمات */
         .collocations-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 15px; }
         .collocation-col { background: var(--card); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
         .word-cloud { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 15px; min-height: 120px; padding: 20px; margin-bottom: 15px; background: var(--bg); border-radius: 8px; }
         .cloud-word { font-family: 'Amiri', serif; font-weight: bold; transition: transform 0.3s; }
         .cloud-word:hover { transform: scale(1.2); }
 
-        /* نافذة "عن البرنامج" */
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 2000; justify-content: center; align-items: center; }
         .modal-content { background: var(--card); padding: 30px; border-radius: 12px; max-width: 500px; width: 90%; text-align: center; border: 2px solid var(--primary); position: relative; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
         .modal-close { position: absolute; top: 10px; right: 15px; cursor: pointer; font-size: 24px; font-weight: bold; color: #d32f2f; transition: 0.3s; }
@@ -112,7 +128,6 @@
         .modal-title { color: var(--primary); font-family: 'Amiri', serif; font-size: 32px; margin-bottom: 15px; }
         .modal-text { font-size: 16px; line-height: 1.8; color: var(--text); }
         .modal-divider { width: 50%; height: 2px; background: var(--accent); margin: 20px auto; }
-        
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; justify-content: center; align-items: center; z-index: 3000; font-size: 24px; }
     </style>
 </head>
@@ -120,14 +135,13 @@
 
 <div id="overlay">تم إغلاق البرنامج بنجاح. يمكنك إغلاق هذه النافذة.</div>
 
-<!-- نافذة عن البرنامج -->
 <div id="aboutModal" class="modal-overlay" onclick="closeAbout(event)">
     <div class="modal-content" onclick="event.stopPropagation()">
         <span class="modal-close" onclick="closeAbout()">&times;</span>
         <div class="modal-title">الباحث في القرآن الكريم</div>
         <div class="modal-text">
-            <strong>الإصدار:</strong> 1.0 (2026)<br><br>
-            هذا البرنامج <strong>مجاني بالكامل</strong> لخدمة كتاب الله والباحثين في علومه، ومتاح المصدر بموجب رخصة الإبداع المشاع (CC BY-NC 4.0).<br>
+            <strong>الإصدار:</strong> 2.0 (2026)<br><br>
+            هذا البرنامج <strong>مجاني بالكامل</strong> لخدمة كتاب الله والباحثين في علومه.<br>
             <div class="modal-divider"></div>
             💡 <strong>صاحب الفكرة:</strong><br>
             <span style="font-size: 20px; font-weight: bold; color: var(--primary);">د. شعيب يحيى</span><br>
@@ -158,7 +172,6 @@
         <button onclick="doSearch()" style="padding: 0 35px;">بحث</button>
     </div>
 
-    <!-- الفلاتر والتحكم -->
     <div class="controls">
         <div class="panel">
             <div class="panel-title">إعدادات وتصفية البحث</div>
@@ -190,6 +203,13 @@
                     <option value="medinan">مدني فقط</option>
                 </select>
             </div>
+            <div class="control-row" style="width: 100%; border-top: 1px dashed var(--border); padding-top: 10px; margin-top: 15px;">
+                <div style="cursor: pointer; color: #e74c3c; font-weight: bold; font-size: 14px; user-select: none;" onclick="const el = document.getElementById('excludedWordsContainer'); el.style.display = el.style.display === 'none' ? 'block' : 'none';">🔻 استبعاد ألفاظ معينة من النتائج (اختياري)</div>
+                <div id="excludedWordsContainer" style="display: none; margin-top: 10px; width: 100%;">
+                    <input type="text" id="excludedWordsInput" placeholder="اكتب الكلمات المراد استبعادها بالتشكيل (مثال: حَبَّ حَبَّةً)..." style="width: 100%; box-sizing: border-box; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-family: 'Amiri'; font-size: 16px;">
+                    <div style="font-size: 12px; color: #777; margin-top: 5px;">* سيتم تجاهل هذه الكلمات في (العدّ، الإعراب، والكلمات المصاحبة) حتى لو تواجدت مع كلمة صحيحة في نفس الآية.</div>
+                </div>
+            </div>
         </div>
 
         <div class="panel">
@@ -204,32 +224,49 @@
                 <input type="range" id="contextWindow" min="1" max="5" value="1" onchange="document.getElementById('windowVal').innerText = this.value; doSearch();" style="width: 100px;">
                 <span id="windowVal" style="font-weight:bold; color:var(--accent); font-size:18px;">1</span>
             </div>
+
+            <div class="control-row" style="margin-top: 15px; border-top: 1px dashed var(--border); padding-top: 10px;">
+                <label style="font-weight: bold; color: var(--primary);">حجم الألفاظ المصاحبة:</label>
+                <label><input type="radio" name="ngram_size" value="1" checked onchange="doSearch()"> كلمة (مفردة)</label>
+                <label><input type="radio" name="ngram_size" value="2" onchange="doSearch()"> عبارة (ثنائية)</label>
+                <label><input type="radio" name="ngram_size" value="3" onchange="doSearch()"> عبارة (ثلاثية)</label>
+            </div>
         </div>
     </div>
 
-    <!-- الإحصائيات -->
     <div class="stats-bar">
         <div id="countDisplay" style="font-size: 18px; font-weight: bold;">النتائج ستظهر هنا</div>
         <div class="actions-group">
+            
+            <button id="btnUpdateStats" class="btn-icon pulse-btn" style="display:none;" onclick="doSearch(true)">تحديث الإحصائيات 🔄</button>
             <button id="btnCopy" class="btn-icon btn-copy" onclick="copyResults()" disabled>نسخ النتائج 📋</button>
-            <button id="btnWord" class="btn-icon btn-word" onclick="downloadWord()" disabled>تحميل في Word 💾</button>
+            <button id="btnWord" class="btn-icon btn-word" onclick="downloadWord()" disabled>تحميل Word 💾</button>
+
+            <!-- قائمة المحفظة البحثية المنسدلة -->
+            <div style="position: relative; display: inline-block;">
+                <button class="btn-icon" style="background: #8e44ad;" onclick="toggleWorkspaceMenu(event)">المحفظة البحثية 💼 ⏷</button>
+                
+                <div id="workspaceMenu" class="dropdown-menu">
+                    <button onclick="saveWorkspace(); toggleWorkspaceMenu();">حفظ العمل 📌</button>
+                    <button onclick="restoreWorkspace(); toggleWorkspaceMenu();">استرجاع العمل 📂</button>
+                    <button onclick="deleteWorkspace(); toggleWorkspaceMenu();" style="color: #e74c3c;">حذف عمل 🗑️</button>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- النتائج -->
     <div class="results-box">
         <div id="resultsContent"><div style="text-align: center; color: #777; padding: 20px;">نتائج البحث ستظهر هنا...</div></div>
         <button id="btnLoadMore" class="btn-load-more" onclick="loadMore()">عرض المزيد ⬇️</button>
     </div>
 
-    <!-- قسم أسرار السياق (الكلمات المصاحبة) -->
     <div class="analytics-container" id="collocationSection" style="display: none;">
         <div class="chart-header">
             <h3>الكلمات المصاحبة</h3>
             <div style="font-size: 13px; color: #777;">*تم استبعاد أحرف الجر والعطف والضمائر</div>
         </div>
         <div class="collocations-grid">
-            <!-- الكلمات قبلها -->
             <div class="collocation-col">
                 <h4 style="text-align:center; color: var(--primary);">أكثر 10 كلمات وروداً (قبلها)</h4>
                 <div id="cloudBefore" class="word-cloud"></div>
@@ -238,7 +275,6 @@
                     <tbody id="tableBefore"></tbody>
                 </table>
             </div>
-            <!-- الكلمات بعدها -->
             <div class="collocation-col">
                 <h4 style="text-align:center; color: var(--primary);">أكثر 10 كلمات وروداً (بعدها)</h4>
                 <div id="cloudAfter" class="word-cloud"></div>
@@ -250,7 +286,33 @@
         </div>
     </div>
 
-    <!-- التحليل البياني والإحصائي لانتشار الكلمة -->
+    <div class="analytics-container" id="grammarSection" style="display: none;">
+        <div class="chart-header">
+            <h3>لوحة الأسماء والأفعال (تفاعلية)</h3>
+            <div style="font-size: 13px; color: #777; font-weight: bold;">*انقر على أي حالة إعرابية لعرض مسار انتشارها في الرسم البياني أسفله!</div>
+        </div>
+        <div class="grammar-dashboard">
+            <div class="grammar-col">
+                <button class="grammar-total-btn" onclick="plotGrammar('nouns', -1, this)">
+                    <span style="display:flex; align-items:center; gap:8px;">
+                        <span class="toggle-icon" style="font-size: 16px; opacity: 0.5;">🔘</span> مجموع الأسماء:
+                    </span>
+                    <span id="nounsTotal">0</span>
+                </button>
+                <div id="nounsList"></div>
+            </div>
+            <div class="grammar-col">
+                <button class="grammar-total-btn" onclick="plotGrammar('verbs', -1, this)" style="background: var(--accent);">
+                    <span style="display:flex; align-items:center; gap:8px;">
+                        <span class="toggle-icon" style="font-size: 16px; opacity: 0.5;">🔘</span> مجموع الأفعال:
+                    </span>
+                    <span id="verbsTotal">0</span>
+                </button>
+                <div id="verbsList"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="analytics-container">
         <div class="chart-header">
             <h3>التحليل البياني للانتشار</h3>
@@ -271,13 +333,7 @@
         </div>
         <canvas id="myChart" height="90" style="background: var(--card); border-radius: 8px; padding: 10px;"></canvas>
         <table class="stats-table" id="statsTable">
-            <thead>
-                <tr>
-                    <th>القطاع / القسم</th>
-                    <th>عدد الآيات</th>
-                    <th style="width: 40%">النسبة المئوية</th>
-                </tr>
-            </thead>
+            <thead><tr><th>القطاع / القسم</th><th>عدد الآيات</th><th style="width: 40%">النسبة المئوية</th></tr></thead>
             <tbody id="statsTableBody"></tbody>
         </table>
     </div>
@@ -295,8 +351,12 @@
     let currentPage = 1;
     const ITEMS_PER_PAGE = 50;
     let globalRootHighlights = {};
+    let currentGrammarData = null;
+    let activeGrammarFilters = [];
+    let excludedIds = [];
+    let ayahNotes = {};
+    let currentCollocations = null;
 
-    // دالة إظهار وإخفاء حقل المقارنة
     function toggleCompare() {
         isCompareMode = !isCompareMode;
         const q2 = document.getElementById('queryInput2');
@@ -307,17 +367,12 @@
         btn.style.background = isCompareMode ? '#d32f2f' : 'var(--accent)';
     }
 
-    // دوال نافذة "عن البرنامج"
     function openAbout() { document.getElementById('aboutModal').style.display = 'flex'; }
-    function closeAbout(e) { 
-        if(e) e.stopPropagation(); 
-        document.getElementById('aboutModal').style.display = 'none'; 
-    }
+    function closeAbout(e) { if(e) e.stopPropagation(); document.getElementById('aboutModal').style.display = 'none'; }
 
     function toggleDarkMode() {
         document.body.classList.toggle('dark-mode');
         const btns = document.querySelectorAll('.top-buttons-right .btn-top');
-        // تغيير أيقونة الوضع الليلي فقط (الزر الثاني)
         if(document.body.classList.contains('dark-mode')) {
             btns[1].innerHTML = "الوضع العادي ☀️"; Chart.defaults.color = '#e0e0e0';
         } else {
@@ -331,46 +386,53 @@
         const diacritics = '[\\u0610-\\u061A\\u064B-\\u065F\\u0670\\u06D6-\\u06ED]*';
         let resultText = text;
         
-        wordsArray.forEach(word => {
+        wordsArray.forEach((word, idx) => {
             const cleanWord = word.trim();
             if (cleanWord) {
-                // بناء التعبير النمطي الأساسي لمطابقة الحروف والتشكيل
+                // تحديد فئة اللون بناءً على ترتيب الكلمة
+                const colorClass = "highlight-" + (idx % 5);
                 let regexStr = cleanWord.split('').join(diacritics) + diacritics;
                 
+                // تفكيك وسوم HTML لمنع توقف واجهة الدردشة
+                let openSpan = '<' + 'span class="' + colorClass + '">';
+                let closeSpan = '<' + '/span>';
+                
                 if (matchType === 'exact') {
-                    // سر التطابق التام: نلزم الكلمة بأن تكون بين مسافتين (أو أول/آخر النص)
-                    regexStr = `(^|\\s)(${regexStr})(?=\\s|$)`;
+                    regexStr = '(^|\\s)(' + regexStr + ')(?=\\s|$)';
                     const regex = new RegExp(regexStr, 'g');
-                    resultText = resultText.replace(regex, '$1<span class="highlight">$2</span>');
+                    resultText = resultText.replace(regex, '$1' + openSpan + '$2' + closeSpan);
                 } else {
-                    // التلوين الجزئي (يعمل كما كان بنجاح)
-                    regexStr = `(${regexStr})`;
+                    regexStr = '(' + regexStr + ')';
                     const regex = new RegExp(regexStr, 'g');
-                    resultText = resultText.replace(regex, '<span class="highlight">$1</span>');
+                    resultText = resultText.replace(regex, openSpan + '$1' + closeSpan);
                 }
             }
         });
         return resultText;
     }
 
-    async function doSearch() {
+    async function doSearch(isUpdate = false) {
+        if (isUpdate !== true) { excludedIds = []; } 
+        activeGrammarFilters = []; 
+        document.getElementById('btnUpdateStats').style.display = 'none';
+
         const query = document.getElementById('queryInput').value.trim();
         const query2 = document.getElementById('queryInput2').value.trim();
         if (!query) return;
 
         const multiWordLogic = document.querySelector('input[name="multi_word_logic"]:checked').value;
         currentWords = (multiWordLogic === 'phrase') ? [query] : query.split(/\s+/);
-        if (isCompareMode && query2) {
-            currentWords = currentWords.concat(multiWordLogic === 'phrase' ? [query2] : query2.split(/\s+/));
-        }
-        
+        if (isCompareMode && query2) { currentWords = currentWords.concat(multiWordLogic === 'phrase' ? [query2] : query2.split(/\s+/)); }
         query1Name = query; query2Name = query2;
 
         const payload1 = {
             query: query, search_target: document.querySelector('input[name="search_target"]:checked').value,
             match_type: document.querySelector('input[name="match_type"]:checked').value,
             multi_word_logic: multiWordLogic, sura_filter: document.getElementById('suraFilter').value,
-            type_filter: document.getElementById('typeFilter').value, context_window: document.getElementById('contextWindow').value
+            type_filter: document.getElementById('typeFilter').value, context_window: document.getElementById('contextWindow').value,
+            ngram_size: document.querySelector('input[name="ngram_size"]:checked') ? document.querySelector('input[name="ngram_size"]:checked').value : 1,
+            excluded_ids: excludedIds,
+            excluded_words: document.getElementById('excludedWordsInput') ? document.getElementById('excludedWordsInput').value : ''
         };
         
         document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; padding: 20px;">جاري البحث وتحليل السياق...</div>';
@@ -384,12 +446,12 @@
                 req2 = fetch('/api/search', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload2) });
             }
 
-            // إرسال الطلبين معاً وانتظار النتيجة
             const [res1, res2] = await Promise.all([req1, req2 ? req2 : Promise.resolve(null)]);
             const data1 = await res1.json();
             const data2 = res2 ? await res2.json() : null;
 
             chartDataStore = data1.chart;
+            currentCollocations = data1.collocations;
             chartDataStore2 = data2 ? data2.chart : null;
             globalRootHighlights = data1.root_highlights || {};
             
@@ -400,14 +462,12 @@
             }
 
             if (data2) {
-                // دمج نتائج الكلمتين وإزالة الآيات المكررة (إذا اجتمعت الكلمتان في نفس الآية)
                 globalResults = [...data1.results, ...data2.results];
                 const uniqueResults = []; const seen = new Set();
                 globalResults.forEach(item => {
                     const id = `${item.sura_id}_${item.aya_num}`;
                     if (!seen.has(id)) { seen.add(id); uniqueResults.push(item); }
                 });
-                // ترتيب الآيات حسب المصحف
                 globalResults = uniqueResults.sort((a, b) => (a.sura_id === b.sura_id) ? a.aya_num - b.aya_num : a.sura_id - b.sura_id);
                 document.getElementById('countDisplay').innerHTML = `مقارنة: <span style="color:var(--accent)">${query1Name}</span> (${data1.occurrences}) | <span style="color:#e74c3c">${query2Name}</span> (${data2.occurrences})`;
             } else {
@@ -422,9 +482,18 @@
             resetAndRender(); 
             updateAnalytics(); 
             
-            // إخفاء الكلمات المصاحبة في وضع المقارنة لمنع التداخل
-            if (data2) document.getElementById('collocationSection').style.display = 'none';
-            else renderCollocations(data1.collocations); 
+            if (data2) {
+                document.getElementById('collocationSection').style.display = 'none';
+                document.getElementById('grammarSection').style.display = 'none';
+            } else {
+                renderCollocations(data1.collocations); 
+                if (payload1.match_type === 'root' && data1.grammar_dashboard && (data1.grammar_dashboard.nouns.total > 0 || data1.grammar_dashboard.verbs.total > 0)) {
+                    document.getElementById('grammarSection').style.display = 'block';
+                    renderGrammarDashboard(data1.grammar_dashboard);
+                } else {
+                    document.getElementById('grammarSection').style.display = 'none';
+                }
+            } 
 
         } catch (e) {
             document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; color: red;">حدث خطأ في الاتصال.</div>';
@@ -498,7 +567,7 @@
         }
 
         const displayType = document.querySelector('input[name="display_type"]:checked').value;
-        const matchType = document.querySelector('input[name="match_type"]:checked').value; // معرفة نوع البحث
+        const matchType = document.querySelector('input[name="match_type"]:checked').value;
         const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
         const endIndex = startIndex + ITEMS_PER_PAGE;
         const slice = globalResults.slice(startIndex, endIndex);
@@ -506,19 +575,22 @@
         let html = '';
         slice.forEach((item, index) => {
             let textToDisplay = item[displayType];
+            if (matchType !== 'root') { textToDisplay = highlightArabicText(textToDisplay, currentWords, matchType); }
             
-            // تطبيق التلوين فقط إذا لم يكن البحث بالجذر
-            if (matchType !== 'root') {
-                textToDisplay = highlightArabicText(textToDisplay, currentWords, matchType);
-            }
-
-            html += `<div class="aya-card"><strong>${startIndex + index + 1}.</strong><span> ﴿ ${textToDisplay} ﴾ </span><span class="aya-ref">[${item.sura_name}:${item.aya_num}]</span></div>`;
+            let excludeBtn = `<button class="btn-exclude" onclick="toggleExclude(${item.id}, this)">${excludedIds.includes(item.id) ? '👁️ تراجع' : '🚫 إخفاء'}</button>`;
+            let noteContent = ayahNotes[item.id] || ''; // جلب الملاحظة إن وجدت
+            
+            html += `<div class="aya-card ${excludedIds.includes(item.id) ? 'excluded' : ''}" id="aya-${item.id}">
+                <strong>${startIndex + index + 1}.</strong><span> ﴿ ${textToDisplay} ﴾ </span>
+                <span class="aya-ref">[${item.sura_name}:${item.aya_num}]</span> ${excludeBtn}
+                <textarea class="aya-note" placeholder="اكتب ملاحظاتك وتأملاتك البحثية حول هذه الآية..." onchange="ayahNotes[${item.id}] = this.value">${noteContent}</textarea>
+            </div>`;
         });
         resultsBox.innerHTML += html; 
         btnLoadMore.style.display = (endIndex < globalResults.length) ? 'block' : 'none';
     }
 
-    function updateAnalytics() {
+    function updateAnalytics(animate = true) {
         if(!chartDataStore || !chartDataStore.mushaf) return;
         const chartType = document.querySelector('input[name="chart_type"]:checked').value;
         const chartSort = document.querySelector('input[name="chart_sort"]:checked').value;
@@ -528,55 +600,84 @@
         
         if (chartObj) chartObj.destroy();
         
-        let datasets = [{
-            label: (isCompareMode && chartDataStore2) ? query1Name : 'عدد الآيات', 
+        let datasets = [];
+        
+        // 1. البيانات الأساسية الكلية وتلوين الفاصل المكي/المدني بذكاء
+        let baseOpacity = activeGrammarFilters.length > 0 ? 0.2 : 1;
+        
+        // الألوان الأساسية للمكي (ذهبي للأعمدة، وأخضر للخطوط)
+        let meccanBar = isDark ? `rgba(251, 192, 45, ${baseOpacity})` : `rgba(197, 155, 39, ${baseOpacity})`;
+        let meccanLine = isDark ? `rgba(76, 175, 80, ${baseOpacity})` : `rgba(27, 94, 32, ${baseOpacity})`;
+        let lineBg = isDark ? `rgba(76, 175, 80, ${baseOpacity * 0.2})` : `rgba(27, 94, 32, ${baseOpacity * 0.15})`;
+
+        // اللون الخاص بالمدني (أزرق للتمييز الواضح)
+        let medinanColor = isDark ? `rgba(52, 152, 219, ${baseOpacity})` : `rgba(41, 128, 185, ${baseOpacity})`;
+
+        let barBgColors = [];
+        let pointColors = [];
+        for (let i = 0; i < selectedData.labels.length; i++) {
+            // الفهرس 7 هو "النبأ-الممتحنة" وهو بداية ظهور السور المدنية
+            let isMedinan = (chartSort === 'revelation' && i >= 7);
+            barBgColors.push(isMedinan ? medinanColor : meccanBar);
+            pointColors.push(isMedinan ? medinanColor : (chartType === 'line' ? meccanLine : meccanBar));
+        }
+
+        datasets.push({
+            label: (isCompareMode && chartDataStore2) ? query1Name : 'إجمالي انتشار الكلمة', 
             data: selectedData.counts,
-            backgroundColor: chartType === 'bar' ? (isDark ? '#fbc02d' : '#c59b27') : (isDark ? 'rgba(76, 175, 80, 0.2)' : 'rgba(27, 94, 32, 0.15)'),
-            borderColor: chartType === 'line' ? (isDark ? '#4caf50' : '#1b5e20') : undefined,
+            backgroundColor: chartType === 'bar' ? barBgColors : lineBg, 
+            borderColor: chartType === 'bar' ? undefined : meccanLine,
             borderWidth: chartType === 'line' ? 2.5 : 0, fill: chartType === 'line', tension: 0.35,
-            pointBackgroundColor: chartType === 'line' ? (isDark ? '#fbc02d' : '#c59b27') : undefined,
-            pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
-        }];
+            pointBackgroundColor: pointColors, pointBorderColor: pointColors, 
+            pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0,
+            
+            // خاصية segment لتلوين مسار الخط الصاعد انطلاقاً من موضع النبأ-الممتحنة (الفهرس 7)
+            segment: {
+                borderColor: ctx => (chartSort === 'revelation' && ctx.p0DataIndex >= 7) ? medinanColor : undefined
+            }
+        });
 
         if (isCompareMode && chartDataStore2) {
             const selectedData2 = chartDataStore2[chartSort];
             datasets.push({
-                label: query2Name, 
-                data: selectedData2.counts,
-                backgroundColor: chartType === 'bar' ? (isDark ? '#e74c3c' : '#c0392b') : (isDark ? 'rgba(231, 76, 60, 0.2)' : 'rgba(192, 57, 43, 0.15)'),
-                borderColor: chartType === 'line' ? (isDark ? '#ff7979' : '#c0392b') : undefined,
+                label: query2Name, data: selectedData2.counts,
+                backgroundColor: chartType === 'bar' ? (isDark ? `rgba(231, 76, 60, ${baseOpacity})` : `rgba(192, 57, 43, ${baseOpacity})`) : (isDark ? `rgba(231, 76, 60, ${baseOpacity * 0.2})` : `rgba(192, 57, 43, ${baseOpacity * 0.15})`),
+                borderColor: chartType === 'line' ? (isDark ? `rgba(255, 121, 121, ${baseOpacity})` : `rgba(192, 57, 43, ${baseOpacity})`) : undefined,
                 borderWidth: chartType === 'line' ? 2.5 : 0, fill: chartType === 'line', tension: 0.35,
-                pointBackgroundColor: chartType === 'line' ? (isDark ? '#ff7979' : '#c0392b') : undefined,
-                pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
+                pointBackgroundColor: chartType === 'line' ? (isDark ? '#ff7979' : '#c0392b') : undefined, pointRadius: chartType === 'line' ? 5 : undefined, borderRadius: chartType === 'bar' ? 4 : 0
             });
         }
 
+        const gColors = isDark ? ['#3498db', '#e74c3c'] : ['#2980b9', '#c0392b']; 
+        activeGrammarFilters.forEach((filter, idx) => {
+            const lineData = chartSort === 'mushaf' ? filter.data_mushaf : filter.data_revelation;
+            datasets.push({
+                label: filter.label, data: lineData,
+                type: 'line', borderColor: gColors[idx % 2], backgroundColor: gColors[idx % 2],
+                borderWidth: 3.5, tension: 0.35, fill: false, pointRadius: 6, pointBackgroundColor: isDark ? '#121212' : '#fff'
+            });
+        });
+
         chartObj = new Chart(ctx, {
-            type: chartType,
-            data: { labels: selectedData.labels, datasets: datasets },
+            type: chartType, data: { labels: selectedData.labels, datasets: datasets },
             options: { 
+                animation: animate ? undefined : false, // إيقاف الأنيميشن المؤقت للتصوير
                 responsive: true, layout: { padding: { right: 35, left: 20 } },
                 scales: { 
                     x: { reverse: true, grid: { color: isDark ? '#333' : '#eee' }, ticks: { font: { family: 'Tajawal' } } }, 
                     y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Tajawal' } }, grid: { color: isDark ? '#333' : '#eee' } } 
-                }, 
-                plugins: { legend: { display: (isCompareMode && chartDataStore2), labels: { font: { family: 'Tajawal', size: 14 }, color: isDark ? '#e0e0e0' : '#333' } } } 
+                }, plugins: { legend: { display: true, labels: { font: { family: 'Tajawal', size: 14 }, color: isDark ? '#e0e0e0' : '#333' } } } 
             }
         });
 
-        // تحديث جدول الإحصائيات ليناسب المقارنة
         let tbody = document.getElementById('statsTableBody');
         tbody.innerHTML = '';
-        
         if (isCompareMode && chartDataStore2) {
             const selectedData2 = chartDataStore2[chartSort];
             document.querySelector('#statsTable thead tr').innerHTML = `<th>القطاع / القسم</th><th style="color: var(--accent);">${query1Name}</th><th style="color: #c0392b;">${query2Name}</th>`;
             selectedData.labels.forEach((label, i) => {
-                let count1 = selectedData.counts[i]; let count2 = selectedData2.counts[i];
-                if(count1 > 0 || count2 > 0) { 
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `<td><strong>${label}</strong></td><td style="color: var(--accent); font-weight: bold; font-size: 18px;">${count1}</td><td style="color: #c0392b; font-weight: bold; font-size: 18px;">${count2}</td>`;
-                    tbody.appendChild(tr);
+                if(selectedData.counts[i] > 0 || selectedData2.counts[i] > 0) { 
+                    tbody.innerHTML += `<tr><td><strong>${label}</strong></td><td style="color: var(--accent); font-weight: bold; font-size: 18px;">${selectedData.counts[i]}</td><td style="color: #c0392b; font-weight: bold; font-size: 18px;">${selectedData2.counts[i]}</td></tr>`;
                 }
             });
         } else {
@@ -586,9 +687,7 @@
                 let count = selectedData.counts[i];
                 if(count > 0) { 
                     let percent = total > 0 ? ((count / total) * 100).toFixed(1) : 0;
-                    let tr = document.createElement('tr');
-                    tr.innerHTML = `<td><strong>${label}</strong></td><td>${count}</td><td><div style="display:flex; align-items:center; gap:10px; justify-content:center;"><span style="width:40px; font-weight:bold;">${percent}%</span><div class="progress-bar-bg" style="width:60%;"><div class="progress-bar-fill" style="width:${percent}%;"></div></div></div></td>`;
-                    tbody.appendChild(tr);
+                    tbody.innerHTML += `<tr><td><strong>${label}</strong></td><td>${count}</td><td><div style="display:flex; align-items:center; gap:10px; justify-content:center;"><span style="width:40px; font-weight:bold;">${percent}%</span><div class="progress-bar-bg" style="width:60%;"><div class="progress-bar-fill" style="width:${percent}%;"></div></div></div></td></tr>`;
                 }
             });
         }
@@ -609,41 +708,355 @@
         if(!chartDataStore || !chartDataStore.mushaf) return;
         const chartSort = document.querySelector('input[name="chart_sort"]:checked').value;
         const selectedData = chartDataStore[chartSort];
-        let total = selectedData.counts.reduce((a, b) => a + b, 0);
         let csvContent = '\uFEFF'; 
-        csvContent += "القسم,عدد الآيات,النسبة المئوية\n";
-        selectedData.labels.forEach((label, i) => {
-            let count = selectedData.counts[i];
-            if(count > 0) {
-                let percent = total > 0 ? ((count / total) * 100).toFixed(1) + "%" : "0%";
-                csvContent += `"${label}",${count},"${percent}"\n`;
-            }
-        });
+        
+        if (isCompareMode && chartDataStore2) {
+            const selectedData2 = chartDataStore2[chartSort];
+            csvContent += `القسم,"${query1Name}","${query2Name}"\n`;
+            selectedData.labels.forEach((label, i) => {
+                if(selectedData.counts[i] > 0 || selectedData2.counts[i] > 0) {
+                    csvContent += `"${label}",${selectedData.counts[i]},${selectedData2.counts[i]}\n`;
+                }
+            });
+        } else {
+            let total = selectedData.counts.reduce((a, b) => a + b, 0);
+            csvContent += "القسم,عدد الآيات,النسبة المئوية\n";
+            selectedData.labels.forEach((label, i) => {
+                let count = selectedData.counts[i];
+                if(count > 0) {
+                    let percent = total > 0 ? ((count / total) * 100).toFixed(1) + "%" : "0%";
+                    csvContent += `"${label}",${count},"${percent}"\n`;
+                }
+            });
+        }
+        
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = `إحصائيات_البحث.csv`; link.click();
+        const link = document.createElement("a"); link.href = URL.createObjectURL(blob); link.download = isCompareMode ? `مقارنة_${query1Name}_و_${query2Name}.csv` : `إحصائيات_البحث.csv`; link.click();
     }
 
     function copyResults() {
         if (!globalResults.length) return;
         const displayType = document.querySelector('input[name="display_type"]:checked').value;
-        let textToCopy = `نتائج البحث عن: "${currentWords.join(' ')}"\nإجمالي الآيات: ${globalResults.length}\n\n`;
-        globalResults.forEach((item, index) => { textToCopy += `${index + 1}. ﴿ ${item[displayType]} ﴾ [${item.sura_name}:${item.aya_num}]\n`; });
+        const finalResults = globalResults.filter(item => !excludedIds.includes(item.id)); 
+        
+        let textToCopy = `نتائج البحث عن: "${currentWords.join(' ')}"\nإجمالي الآيات: ${finalResults.length}\n\n`;
+        finalResults.forEach((item, index) => { textToCopy += `${index + 1}. ﴿ ${item[displayType]} ﴾ [${item.sura_name}:${item.aya_num}]\n`; });
+        
         const textarea = document.createElement("textarea"); textarea.value = textToCopy; document.body.appendChild(textarea);
         textarea.select(); document.execCommand('copy'); document.body.removeChild(textarea);
         const btn = document.getElementById('btnCopy'); btn.innerText = "تم النسخ ✔"; btn.style.backgroundColor = "#27ae60"; 
         setTimeout(() => { btn.innerText = "نسخ النتائج 📋"; btn.style.backgroundColor = "#e67e22"; }, 2000);
     }
 
+    function saveWorkspace() {
+        if (!document.getElementById('queryInput').value.trim()) {
+            alert('يرجى إجراء بحث أولاً قبل الحفظ!'); return;
+        }
+        
+        // طلب اسم لحفظ البحث
+        const wsName = prompt('أدخل اسماً مميزاً لحفظ هذا البحث (مثلاً: دراسة الجذر حبب):');
+        if (!wsName) return; // إذا ضغط المستخدم إلغاء
+
+        const workspaceData = {
+            query: document.getElementById('queryInput').value,
+            query2: document.getElementById('queryInput2').value,
+            match_type: document.querySelector('input[name="match_type"]:checked').value,
+            multi_word_logic: document.querySelector('input[name="multi_word_logic"]:checked').value,
+            search_target: document.querySelector('input[name="search_target"]:checked').value,
+            sura_filter: document.getElementById('suraFilter').value,
+            type_filter: document.getElementById('typeFilter').value,
+            context_window: document.getElementById('contextWindow').value,
+            ngram_size: document.querySelector('input[name="ngram_size"]:checked').value,
+            excluded_words: document.getElementById('excludedWordsInput').value,
+            excludedIds: excludedIds,
+            ayahNotes: ayahNotes
+        };
+        
+        // حفظ البيانات باسم مميز
+        localStorage.setItem('quranWorkspace_' + wsName, JSON.stringify(workspaceData));
+        alert(`تم حفظ مساحة العمل باسم "${wsName}" بنجاح! 📌`);
+    }
+
+    function restoreWorkspace() {
+        // جلب كل أسماء مساحات العمل المحفوظة
+        const savedKeys = Object.keys(localStorage)
+            .filter(k => k.startsWith('quranWorkspace_'))
+            .map(k => k.replace('quranWorkspace_', ''));
+
+        if (savedKeys.length === 0) {
+            alert('لا توجد مساحات عمل محفوظة سابقاً 📂'); return;
+        }
+
+        // عرض قائمة مرقمة للمستخدم
+        let msg = "مساحات العمل المحفوظة لديك:\n\n";
+        savedKeys.forEach((k, index) => { msg += `${index + 1}. ${k}\n`; });
+        msg += "\nاكتب رقم مساحة العمل التي تريد استرجاعها:";
+
+        const choice = prompt(msg);
+        if (!choice) return; // تم الإلغاء
+
+        const index = parseInt(choice) - 1;
+        if (isNaN(index) || index < 0 || index >= savedKeys.length) {
+            alert('رقم غير صحيح!'); return;
+        }
+
+        const wsName = savedKeys[index];
+        const dataStr = localStorage.getItem('quranWorkspace_' + wsName);
+        const data = JSON.parse(dataStr);
+        
+        // استرجاع واجهة البحث
+        document.getElementById('queryInput').value = data.query || '';
+        document.getElementById('queryInput2').value = data.query2 || '';
+        
+        if (data.query2) {
+            isCompareMode = true;
+            document.getElementById('queryInput2').style.display = 'block';
+            document.getElementById('btnCompare').innerText = '- إلغاء المقارنة';
+            document.getElementById('btnCompare').style.background = '#d32f2f';
+        } else {
+            isCompareMode = false;
+            document.getElementById('queryInput2').style.display = 'none';
+            document.getElementById('btnCompare').innerText = '+ مقارنة';
+            document.getElementById('btnCompare').style.background = 'var(--accent)';
+        }
+        
+        // استرجاع الفلاتر
+        document.querySelector(`input[name="match_type"][value="${data.match_type}"]`).checked = true;
+        document.querySelector(`input[name="multi_word_logic"][value="${data.multi_word_logic}"]`).checked = true;
+        document.querySelector(`input[name="search_target"][value="${data.search_target}"]`).checked = true;
+        document.getElementById('suraFilter').value = data.sura_filter || 'all';
+        document.getElementById('typeFilter').value = data.type_filter || 'all';
+        
+        document.getElementById('contextWindow').value = data.context_window || 1;
+        document.getElementById('windowVal').innerText = data.context_window || 1;
+        
+        // استرجاع حجم الألفاظ المصاحبة بأمان
+        if(data.ngram_size) { document.querySelector(`input[name="ngram_size"][value="${data.ngram_size}"]`).checked = true; }
+        
+        // ---- أضف هذا المقطع هنا ----
+        // استرجاع الكلمات المستبعدة (وإظهار المربع تلقائياً إذا كان يحتوي على كلمات)
+        if (document.getElementById('excludedWordsInput')) {
+            const exInput = document.getElementById('excludedWordsInput');
+            exInput.value = data.excluded_words || '';
+            
+            const exContainer = document.getElementById('excludedWordsContainer');
+            if (data.excluded_words && data.excluded_words.trim() !== '') {
+                exContainer.style.display = 'block';
+            } else {
+                exContainer.style.display = 'none';
+            }
+        }
+        
+        // استرجاع البيانات الخفية (الملاحظات والاستبعادات)
+        excludedIds = data.excludedIds || [];
+        ayahNotes = data.ayahNotes || {};
+        
+        // إعادة تنفيذ البحث لتطبيق كل شيء
+        doSearch(true);
+    }
+
+    function deleteWorkspace() {
+        // جلب كل أسماء مساحات العمل المحفوظة
+        const savedKeys = Object.keys(localStorage)
+            .filter(k => k.startsWith('quranWorkspace_'))
+            .map(k => k.replace('quranWorkspace_', ''));
+
+        if (savedKeys.length === 0) {
+            alert('لا توجد مساحات عمل محفوظة لحذفها 📂'); return;
+        }
+
+        // عرض قائمة مرقمة للمستخدم
+        let msg = "مساحات العمل المحفوظة لديك:\n\n";
+        savedKeys.forEach((k, index) => { msg += `${index + 1}. ${k}\n`; });
+        msg += "\nاكتب رقم مساحة العمل التي تريد حذفها نهائياً:";
+
+        const choice = prompt(msg);
+        if (!choice) return; // تم الإلغاء
+
+        const index = parseInt(choice) - 1;
+        if (isNaN(index) || index < 0 || index >= savedKeys.length) {
+            alert('رقم غير صحيح!'); return;
+        }
+
+        const wsName = savedKeys[index];
+        // رسالة تأكيد أخيرة قبل الحذف
+        if (confirm(`هل أنت متأكد جداً من حذف البحث المسمى: "${wsName}"؟ لا يمكن التراجع عن هذا الإجراء.`)) {
+            localStorage.removeItem('quranWorkspace_' + wsName);
+            alert(`تم حذف البحث "${wsName}" بنجاح! 🗑️`);
+        }
+    }
+
     async function downloadWord() {
         if (!globalResults.length) return;
-        const chartSort = document.querySelector('input[name="chart_sort"]:checked').value;
-        const response = await fetch('/export/word', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ query: currentWords.join(' '), results: globalResults, display_type: document.querySelector('input[name="display_type"]:checked').value, stats_data: chartDataStore[chartSort] })
-        });
-        const blob = await response.blob();
-        const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); a.download = `نتائج_البحث.docx`; document.body.appendChild(a); a.click(); a.remove();
+        
+        const btnWord = document.getElementById('btnWord');
+        const originalText = btnWord.innerHTML;
+        btnWord.innerHTML = 'جاري التصدير ⏳...';
+        btnWord.disabled = true;
+
+        const finalResults = globalResults.filter(item => !excludedIds.includes(item.id)); 
+        
+        // حفظ الحالة الأصلية للترتيب
+        const originalSort = document.querySelector('input[name="chart_sort"]:checked').value;
+
+        // 1. التقاط صورة الرسم حسب المصحف
+        document.querySelector('input[name="chart_sort"][value="mushaf"]').checked = true;
+        updateAnalytics(false); // بدون أنيميشن ليتم الرسم فوراً
+        const chartImageMushaf = document.getElementById('myChart').toDataURL('image/png'); 
+        
+        // 2. التقاط صورة الرسم حسب النزول
+        document.querySelector('input[name="chart_sort"][value="revelation"]').checked = true;
+        updateAnalytics(false);
+        const chartImageRev = document.getElementById('myChart').toDataURL('image/png'); 
+
+        // 3. استعادة الحالة الأصلية للواجهة
+        document.querySelector(`input[name="chart_sort"][value="${originalSort}"]`).checked = true;
+        updateAnalytics(true);
+
+        const payload = {
+            query: query1Name, 
+            query2: isCompareMode ? query2Name : null,
+            results: finalResults, 
+            display_type: document.querySelector('input[name="display_type"]:checked').value, 
+            stats_data: chartDataStore,
+            stats_data2: isCompareMode ? chartDataStore2 : null,
+            chart_image_mushaf: chartImageMushaf,
+            chart_image_rev: chartImageRev,
+            grammar_data: currentGrammarData,
+            collocations: currentCollocations,
+            notes: ayahNotes
+        };
+
+        try {
+            const response = await fetch('/export/word', {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const blob = await response.blob();
+            const a = document.createElement('a'); a.href = window.URL.createObjectURL(blob); 
+            a.download = isCompareMode ? `مقارنة_${query1Name}_و_${query2Name}.docx` : `التقرير_الشامل_${query1Name}.docx`; 
+            document.body.appendChild(a); a.click(); a.remove();
+        } catch(e) {
+            alert('حدث خطأ أثناء إعداد التقرير.');
+        }
+
+        btnWord.innerHTML = originalText;
+        btnWord.disabled = false;
     }
+
+    function renderGrammarDashboard(grammarData) {
+        currentGrammarData = grammarData;
+        activeGrammarFilters = []; 
+        
+        const populateCol = (catKey, totalId, listId) => {
+            const cat = grammarData[catKey];
+            document.getElementById(totalId).innerText = cat.total;
+            const listEl = document.getElementById(listId);
+            listEl.innerHTML = '';
+            
+            cat.details.forEach((item, index) => {
+                const btn = document.createElement('button');
+                btn.className = 'grammar-item-btn';
+                btn.onclick = function() { plotGrammar(catKey, index, this); };
+                btn.innerHTML = `
+                    <div class="grammar-item-header">
+                        <span style="display:flex; align-items:center; gap:8px;">
+                            <span class="toggle-icon" style="font-size: 16px; opacity: 0.5;">🔘</span> 
+                            ${item.name}
+                        </span>
+                        <span>${item.count} (${item.percent}%)</span>
+                    </div>
+                    <div class="grammar-item-bar-bg"><div class="grammar-item-bar-fill" style="width: ${item.percent}%;"></div></div>
+                `;
+                listEl.appendChild(btn);
+            });
+        };
+        
+        populateCol('nouns', 'nounsTotal', 'nounsList');
+        populateCol('verbs', 'verbsTotal', 'verbsList');
+    }
+
+    function plotGrammar(catKey, index, btnElement) {
+        let item, labelStr, distMushaf, distRev;
+        
+        if (index === -1) {
+            const cat = currentGrammarData[catKey];
+            labelStr = `مجموع ` + (catKey === 'nouns' ? 'الأسماء' : 'الأفعال');
+            distMushaf = [0,0,0,0,0,0,0,0,0,0];
+            distRev = [0,0,0,0,0,0,0,0,0,0];
+            cat.details.forEach(d => { 
+                for(let i=0; i<10; i++) {
+                    distMushaf[i] += d.dist_mushaf[i];
+                    distRev[i] += d.dist_revelation[i];
+                }
+            });
+        } else {
+            item = currentGrammarData[catKey].details[index];
+            labelStr = item.name;
+            distMushaf = item.dist_mushaf;
+            distRev = item.dist_revelation;
+        }
+        
+        const existingIdx = activeGrammarFilters.findIndex(f => f.label === labelStr);
+        if (existingIdx > -1) {
+            activeGrammarFilters.splice(existingIdx, 1);
+            btnElement.style.border = ''; 
+        } else {
+            if (activeGrammarFilters.length >= 2) {
+                activeGrammarFilters.shift(); 
+            }
+            activeGrammarFilters.push({label: labelStr, data_mushaf: distMushaf, data_revelation: distRev, element: btnElement});
+        }
+        
+        document.querySelectorAll('.grammar-item-btn, .grammar-total-btn').forEach(b => {
+            b.style.border = '';
+            let icon = b.querySelector('.toggle-icon');
+            if(icon) { icon.innerText = '🔘'; icon.style.opacity = '0.5'; }
+        });
+
+        activeGrammarFilters.forEach((f, idx) => {
+            if(f.element) {
+                f.element.style.border = idx === 0 ? '2px solid #2980b9' : '2px solid #c0392b';
+                let icon = f.element.querySelector('.toggle-icon');
+                if(icon) {
+                    icon.innerText = idx === 0 ? '🔵' : '🔴';
+                    icon.style.opacity = '1';
+                }
+            }
+        });
+        
+        document.getElementById('myChart').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        updateAnalytics();
+    }
+
+    function toggleExclude(id, btn) {
+        const card = document.getElementById(`aya-${id}`);
+        const idx = excludedIds.indexOf(id);
+        if (idx > -1) {
+            excludedIds.splice(idx, 1);
+            card.classList.remove('excluded');
+            btn.innerText = '🚫 إخفاء';
+        } else {
+            excludedIds.push(id);
+            card.classList.add('excluded');
+            btn.innerText = '👁️ تراجع';
+        }
+        document.getElementById('btnUpdateStats').style.display = excludedIds.length > 0 ? 'block' : 'none';
+    }
+
+    // دوال التحكم في القائمة المنسدلة للمحفظة
+    function toggleWorkspaceMenu(e) {
+        if(e) e.stopPropagation();
+        document.getElementById('workspaceMenu').classList.toggle('show');
+    }
+
+    // إغلاق القائمة عند النقر في أي مكان آخر بالشاشة
+    window.addEventListener('click', function() {
+        const menu = document.getElementById('workspaceMenu');
+        if (menu && menu.classList.contains('show')) {
+            menu.classList.remove('show');
+        }
+    });
 
     async function shutdownApp() {
         if(confirm("هل أنت متأكد أنك تريد إيقاف البرنامج؟")) {
