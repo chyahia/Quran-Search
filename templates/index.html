@@ -129,6 +129,51 @@
         .modal-text { font-size: 16px; line-height: 1.8; color: var(--text); }
         .modal-divider { width: 50%; height: 2px; background: var(--accent); margin: 20px auto; }
         #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); color: white; justify-content: center; align-items: center; z-index: 3000; font-size: 24px; }
+    
+        /* =========================================
+           تحسينات التوافق مع شاشات الهواتف (Responsive)
+           ========================================= */
+        @media screen and (max-width: 768px) {
+            body { padding: 10px; }
+            .container { padding: 15px; }
+            
+            .top-buttons-left, .top-buttons-right { position: relative; top: 0; right: 0; left: 0; justify-content: center; flex-wrap: wrap; margin-bottom: 10px; }
+            .header { margin-top: 10px; }
+            .header h1 { font-size: 28px; }
+
+            .search-bar { flex-direction: column; }
+            .search-bar button { width: 100%; padding: 12px; font-size: 16px; margin-top: 5px; }
+
+            .controls { grid-template-columns: 1fr; }
+            
+            /* ترتيب خيارات البحث الراديوية لمنع التداخل */
+            .control-row { flex-direction: column; align-items: flex-start; gap: 10px; }
+            .control-row span { display: flex; flex-direction: column; gap: 10px; border-right: none !important; padding-right: 0 !important; margin-right: 0 !important; width: 100%; border-top: 1px dashed var(--border); padding-top: 10px; }
+            .control-row select { width: 100%; margin-bottom: 5px; }
+            
+            .stats-bar { flex-direction: column; gap: 15px; text-align: center; }
+            .actions-group { flex-wrap: wrap; justify-content: center; width: 100%; }
+            .btn-icon { flex: 1 1 45%; padding: 10px 5px; font-size: 13px; text-align: center; margin: 0; }
+            
+            .dropdown-menu { width: 100%; text-align: center; right: 0; }
+            .dropdown-menu button { text-align: center; }
+
+            .aya-card { font-size: 20px; line-height: 1.8; }
+            .aya-ref { display: block; margin-top: 10px; margin-bottom: 10px; }
+            
+            .collocations-grid, .grammar-dashboard { grid-template-columns: 1fr; }
+            
+            .chart-header { flex-direction: column; gap: 15px; text-align: center; }
+            .chart-tools { flex-direction: column; width: 100%; padding: 10px; box-sizing: border-box; }
+            .chart-col { border-left: none !important; border-bottom: 1px solid var(--border); padding-bottom: 10px; padding-left: 0 !important; width: 100%; align-items: center; }
+            .chart-col:last-child { border-bottom: none; padding-bottom: 0; }
+            
+            /* حل مشكلة اختفاء الرسم البياني بإجباره على ارتفاع محدد في الهاتف */
+            canvas#myChart { min-height: 250px !important; width: 100% !important; }
+            
+            .stats-table { display: block; overflow-x: auto; white-space: nowrap; font-size: 14px; }
+        }
+    
     </style>
 </head>
 <body>
@@ -331,7 +376,11 @@
                 </div>
             </div>
         </div>
-        <canvas id="myChart" height="90" style="background: var(--card); border-radius: 8px; padding: 10px;"></canvas>
+        
+        <div style="position: relative; height: 350px; width: 100%; margin-bottom: 20px;">
+            <canvas id="myChart" style="background: var(--card); border-radius: 8px; padding: 10px;"></canvas>
+        </div>
+
         <table class="stats-table" id="statsTable">
             <thead><tr><th>القطاع / القسم</th><th>عدد الآيات</th><th style="width: 40%">النسبة المئوية</th></tr></thead>
             <tbody id="statsTableBody"></tbody>
@@ -662,7 +711,9 @@
             type: chartType, data: { labels: selectedData.labels, datasets: datasets },
             options: { 
                 animation: animate ? undefined : false, // إيقاف الأنيميشن المؤقت للتصوير
-                responsive: true, layout: { padding: { right: 35, left: 20 } },
+                responsive: true, 
+                maintainAspectRatio: false,
+                layout: { padding: { right: 35, left: 20 } },
                 scales: { 
                     x: { reverse: true, grid: { color: isDark ? '#333' : '#eee' }, ticks: { font: { family: 'Tajawal' } } }, 
                     y: { beginAtZero: true, ticks: { stepSize: 1, font: { family: 'Tajawal' } }, grid: { color: isDark ? '#333' : '#eee' } } 
