@@ -21,7 +21,7 @@ app = Flask(__name__,
             template_folder=resource_path('templates'),
             static_folder=resource_path('static'))
 DB_PATH = resource_path('quran.db')
-IS_LOCAL = True
+IS_LOCAL = False    # غيرها إلى False عند الرفع على موقع الويب المجاني
 
 REV_ORDER_MAP = {
     96: 1, 68: 2, 73: 3, 74: 4, 1: 5, 111: 6, 81: 7, 87: 8, 92: 9, 89: 10, 
